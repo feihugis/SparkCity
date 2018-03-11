@@ -1,0 +1,16 @@
+/target/
+/.idea
+/*.iml
+/.settings/
+/.classpath
+/.project
+/dependency-reduced-pom.xml
+/bin/
+/doc/
+/config/
+/log/
+*.json
+*.geojson
+application/src/main/resources/data/
+*.iml
+*.DS_Store
