@@ -1,6 +1,6 @@
 package edu.gmu.stc.vector.rdd
 
-import com.vividsolutions.jts.geom.{Geometry, GeometryFactory}
+import com.vividsolutions.jts.geom.{Geometry, GeometryFactory, MultiPolygon}
 import com.vividsolutions.jts.index.SpatialIndex
 import edu.gmu.stc.vector.rdd.index.IndexOperator
 import edu.gmu.stc.vector.shapefile.meta.ShapeFileMeta
@@ -11,6 +11,8 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
 import org.datasyslab.geospark.enums.IndexType
 import org.datasyslab.geospark.spatialPartitioning.SpatialPartitioner
+import org.geotools.geometry.jts.JTS
+import org.geotools.referencing.CRS
 import org.wololo.geojson.{Feature, FeatureCollection}
 import org.wololo.jts2geojson.GeoJSONWriter
 
@@ -38,6 +40,13 @@ class GeometryRDD extends Logging{
     this.partitioner = shapeFileMetaRDD.getPartitioner
   }
 
+  def CRSTransfor(sourceEpsgCRSCode: String, targetEpsgCRSCode: String, lenient: Boolean = false): Unit = {
+    val sourceCRS = CRS.decode(sourceEpsgCRSCode)
+    val targetCRS = CRS.decode(targetEpsgCRSCode)
+    val transform = CRS.findMathTransform(sourceCRS, targetCRS, lenient)
+    this.geometryRDD = this.geometryRDD.map(geometry => JTS.transform(geometry, transform))
+  }
+
   def partition(partition: SpatialPartitioner): Unit = {
     this.partitioner = partition
     this.geometryRDD = this.geometryRDD.flatMap(geometry => partition.placeObject(geometry).asScala)
@@ -51,26 +60,10 @@ class GeometryRDD extends Logging{
 
     joinRDD = joinRDD.cache()
 
-    //logInfo("************** Number of elements in JoinedRDD: %d".format(joinRDD.count()))
-
-    val t1 = System.currentTimeMillis()
-
     this.geometryRDD = joinRDD.mapPartitions(IndexOperator.spatialIntersect)
-
-    val t2 = System.currentTimeMillis()
-
-    //logInfo("******** Intersection takes: %d".format((t2 - t1)/1000))
   }
 
   def getGeometryRDD: RDD[Geometry] = this.geometryRDD
-
-  def cache(): Unit = {
-    this.geometryRDD = this.geometryRDD.cache()
-  }
-
-  def uncache(blocking: Boolean = true): Unit = {
-    this.geometryRDD.unpersist(blocking)
-  }
 
   def indexPartition(indexType: IndexType) = {
     val indexBuilder = new IndexOperator(indexType.toString)
@@ -82,6 +75,12 @@ class GeometryRDD extends Logging{
     geometryRDD.geometryRDD = this.indexedGeometryRDD.zipPartitions(other.geometryRDD)(IndexOperator.geoSpatialIntersection)
     geometryRDD.geometryRDD = geometryRDD.geometryRDD.filter(geometry => !geometry.isEmpty)
     geometryRDD
+  }
+
+  def spatialJoin(other: GeometryRDD): RDD[(Geometry, Iterable[Geometry])] = {
+    val pairedRDD= this.indexedGeometryRDD.zipPartitions(other.geometryRDD)(IndexOperator.geoSpatialJoin)
+    //TODO: is there any other efficient way
+    pairedRDD.groupByKey()
   }
 
   def intersectV2(other: GeometryRDD, partitionNum: Int): GeometryRDD = {
@@ -107,6 +106,14 @@ class GeometryRDD extends Logging{
     geometryRDD
   }
 
+  def cache(): Unit = {
+    this.geometryRDD = this.geometryRDD.cache()
+  }
+
+  def uncache(blocking: Boolean = true): Unit = {
+    this.geometryRDD.unpersist(blocking)
+  }
+
   def saveAsGeoJSON(outputLocation: String): Unit = {
     this.geometryRDD.mapPartitions(iterator => {
       val geoJSONWriter = new GeoJSONWriter
@@ -125,10 +132,7 @@ class GeometryRDD extends Logging{
   }
 
   def saveAsShapefile(filepath: String): Unit = {
-    val polygons = this.geometryRDD.collect().toList.asJava
-    GeometryReaderUtil.saveAsShapefile(filepath, polygons)
+    val geometries = this.geometryRDD.collect().toList.asJava
+    GeometryReaderUtil.saveAsShapefile(filepath, geometries)
   }
-
-
-
 }

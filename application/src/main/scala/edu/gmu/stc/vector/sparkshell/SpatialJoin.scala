@@ -1,35 +1,37 @@
 package edu.gmu.stc.vector.sparkshell
 
+import com.vividsolutions.jts.geom.Envelope
 import edu.gmu.stc.config.ConfigParameter
 import edu.gmu.stc.vector.operation.OperationUtil
 import edu.gmu.stc.vector.rdd.{GeometryRDD, ShapeFileMetaRDD}
 import edu.gmu.stc.vector.serde.VectorKryoRegistrator
+import edu.gmu.stc.vector.sparkshell.STC_OverlapTest_v3.{logDebug, logError, logInfo}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.spark.internal.Logging
 import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.internal.Logging
 import org.datasyslab.geospark.enums.{GridType, IndexType}
+import org.geotools.geometry.jts.JTS
+import org.geotools.referencing.CRS
 
 /**
-  * Created by Fei Hu.
+  * Created by Fei Hu on 3/11/18.
   */
-object STC_OverlapTest_v3 extends Logging{
+object SpatialJoin extends Logging{
+
   def main(args: Array[String]): Unit = {
 
-    if (args.length != 5) {
+    if (args.length != 4) {
       logError("You input "+ args.length + "arguments: " + args.mkString(" ") + ", but it requires 5 arguments: " +
         "\n \t 1)configFilePath: this file path for the configuration file path" +
         "\n \t 2) numPartition: the number of partitions" +
         "\n \t 3) gridType: the type of the partition, e.g. EQUALGRID, HILBERT, RTREE, VORONOI, QUADTREE, KDBTREE" +
-        "\n \t 4) indexType: the index type for each partition, e.g. QUADTREE, RTREE" +
-        "\n \t 5) output file path: the file path for geojson output")
+        "\n \t 4) indexType: the index type for each partition, e.g. QUADTREE, RTREE")
 
       return
     }
 
-    val t = System.currentTimeMillis()
-
-    val sparkConf = new SparkConf().setAppName("%s_%s_%s_%s".format("STC_OverlapTest_v2", args(1), args(2), args(3)))
+    val sparkConf = new SparkConf().setAppName("%s_%s_%s_%s".format("Spatial_Join", args(1), args(2), args(3)))
       .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .set("spark.kryo.registrator", classOf[VectorKryoRegistrator].getName)
 
@@ -39,6 +41,7 @@ object STC_OverlapTest_v3 extends Logging{
 
     val sc = new SparkContext(sparkConf)
 
+
     val configFilePath = args(0)   //"/Users/feihu/Documents/GitHub/GeoSpark/config/conf.xml"
     val hConf = new Configuration()
     hConf.addResource(new Path(configFilePath))
@@ -47,10 +50,19 @@ object STC_OverlapTest_v3 extends Logging{
     val tableNames = hConf.get(ConfigParameter.SHAPEFILE_INDEX_TABLES).split(",").map(s => s.toLowerCase().trim)
 
     val partitionNum = args(1).toInt  //24
-    val minX = -180
-    val minY = -180
-    val maxX = 180
-    val maxY = 180
+
+    // Bounding box for querying shapefiles
+    val minX = -76.6517
+    val minY = 39.2622
+    val maxX = -76.5579
+    val maxY = 39.3212
+
+    //Transform query bbox projection
+    val sourceCRS = CRS.decode("epsg:4326", true)
+    val targetCRS = CRS.decode("epsg:32618", true)
+    val transform = CRS.findMathTransform(sourceCRS, targetCRS, true)
+    val bbox = JTS.transform(new Envelope(minX, minY, maxX, maxY), transform)
+
 
     val gridType = GridType.getGridType(args(2)) //EQUALGRID, HILBERT, RTREE, VORONOI, QUADTREE, KDBTREE
     val indexType = IndexType.getIndexType(args(3))  //RTREE, QUADTREE
@@ -64,8 +76,6 @@ object STC_OverlapTest_v3 extends Logging{
     geometryRDD1.indexPartition(indexType)
     geometryRDD1.cache()
 
-    logInfo("*************Counting GeometryRDD1 Time: " + OperationUtil.show_timing(geometryRDD1.getGeometryRDD.count()))
-
     val partitionNum1 = geometryRDD1.getGeometryRDD.mapPartitionsWithIndex({
       case (index, itor) => {
         List((index, itor.size)).toIterator
@@ -73,55 +83,38 @@ object STC_OverlapTest_v3 extends Logging{
     }).collect()
 
     logDebug("********geometryRDD1*************\n")
-    partitionNum1.foreach(println)
+    OperationUtil.show_partitionInfo(geometryRDD1.getGeometryRDD)
+    logDebug("******Geometry Num****************" + geometryRDD1.getGeometryRDD.count())
     logDebug("********geometryRDD1*************\n")
-    logDebug("******geometryRDD1****************" + geometryRDD1.getGeometryRDD.count())
 
     val shapeFileMetaRDD2 = new ShapeFileMetaRDD(sc, hConf)
     val table2 = tableNames(1)
+
+
+
     shapeFileMetaRDD2.initializeShapeFileMetaRDDWithoutPartition(sc, table2,
-      partitionNum, minX, minY, maxX, maxY)
+      partitionNum, bbox.getMinX, bbox.getMinY, bbox.getMaxX, bbox.getMaxY)
 
     val geometryRDD2 = new GeometryRDD
     geometryRDD2.initialize(shapeFileMetaRDD2, hasAttribute = false)
+    geometryRDD2.CRSTransfor("epsg:32618", "epsg:4326")
     geometryRDD2.partition(shapeFileMetaRDD1.getPartitioner)
     geometryRDD2.cache()
 
     logDebug("*************Counting GeometryRDD2 Time: " + OperationUtil.show_timing(geometryRDD2.getGeometryRDD.count()))
 
 
-    val partitionNum2 = geometryRDD2.getGeometryRDD.mapPartitionsWithIndex({
-      case (index, itor) => {
-        List((index, itor.size)).toIterator
-      }
-    }).collect()
+    logDebug("********geometryRDD2*************\n")
+    OperationUtil.show_partitionInfo(geometryRDD2.getGeometryRDD)
+    logDebug("******Geometry Num****************" + geometryRDD2.getGeometryRDD.count())
+    logDebug("********geometryRDD2*************\n")
 
-    logDebug("*********geometryRDD2************\n")
-    partitionNum2.foreach(println)
-    logDebug("*********geometryRDD2************\n")
 
-    logDebug("******geometryRDD2****************" + geometryRDD2.getGeometryRDD.count())
-
-    logDebug(geometryRDD1.getGeometryRDD.partitions.length
-      + "**********************"
-      + geometryRDD2.getGeometryRDD.partitions.length)
-
-    val startTime = System.currentTimeMillis()
-    val geometryRDD = geometryRDD1.intersectV2(geometryRDD2, partitionNum)
+    val geometryRDD = geometryRDD1.spatialJoin(geometryRDD2)
     geometryRDD.cache()
-    val endTime = System.currentTimeMillis()
-    logDebug("******** Intersection time: " + (endTime - startTime)/1000000)
 
-    val filePath = args(4)
-    if (filePath.endsWith("shp")) {
-      geometryRDD.saveAsShapefile(filePath)
-    } else {
-      geometryRDD.saveAsGeoJSON(filePath)
-    }
 
-    logDebug("******** Number of intersected polygons: %d".format(geometryRDD.getGeometryRDD.count()))
-
-    logDebug("************** Total time: " + (System.currentTimeMillis() - t)/1000000)
+    logDebug("******** Number of intersected polygons: %d".format(geometryRDD.count()))
   }
 
 }

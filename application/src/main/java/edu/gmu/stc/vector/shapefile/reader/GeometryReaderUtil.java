@@ -151,8 +151,6 @@ public class GeometryReaderUtil {
 
     ReferencingObjectFactory refFactory = new ReferencingObjectFactory();
 
-
-
     FeatureWriter<SimpleFeatureType, SimpleFeature> writer = ds.getFeatureWriter(ds.getTypeNames()[0], Transaction.AUTO_COMMIT);
 
     for (int i = 0; i < geometries.size(); i++) {

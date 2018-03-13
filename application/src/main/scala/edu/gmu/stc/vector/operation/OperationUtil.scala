@@ -3,6 +3,7 @@ package edu.gmu.stc.vector.operation
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path, PathFilter}
 import org.apache.hadoop.hdfs.web.WebHdfsFileSystem
+import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable
 import scala.collection.mutable.HashMap
@@ -47,9 +48,17 @@ object OperationUtil {
     runtime
   }
 
+  def show_partitionInfo[T](rdd: RDD[T]): Unit = {
+    rdd.mapPartitions(parition => List(parition.size).toIterator)
+      .collect()
+      .foreach(println)
+  }
+
   def getUniqID(id1: Long, id2: Long): Long = {
     (id1 << 32) + id2
   }
+
+
 
   def hdfsToLocal(hdfsPath: String, localPath: String) = {
     val conf = new Configuration()
