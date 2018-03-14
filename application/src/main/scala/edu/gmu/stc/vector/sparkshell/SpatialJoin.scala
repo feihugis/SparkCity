@@ -58,10 +58,14 @@ object SpatialJoin extends Logging{
     val maxY = 39.3212
 
     //Transform query bbox projection
-    val sourceCRS = CRS.decode("epsg:4326", true)
-    val targetCRS = CRS.decode("epsg:32618", true)
-    val transform = CRS.findMathTransform(sourceCRS, targetCRS, true)
-    val bbox = JTS.transform(new Envelope(minX, minY, maxX, maxY), transform)
+/*    val sourceCRS = CRS.decode("epsg:4326")
+    val targetCRS = CRS.decode("epsg:32618")
+    val transform = CRS.findMathTransform(sourceCRS, targetCRS)
+    val envelope = new Envelope(minX, minY, maxX, maxY)
+    val envelope2D = JTS.getEnvelope2D(envelope, sourceCRS)
+    val bbox = JTS.transform(envelope, transform)
+
+    println(bbox)*/
 
 
     val gridType = GridType.getGridType(args(2)) //EQUALGRID, HILBERT, RTREE, VORONOI, QUADTREE, KDBTREE
@@ -90,14 +94,12 @@ object SpatialJoin extends Logging{
     val shapeFileMetaRDD2 = new ShapeFileMetaRDD(sc, hConf)
     val table2 = tableNames(1)
 
-
-
     shapeFileMetaRDD2.initializeShapeFileMetaRDDWithoutPartition(sc, table2,
-      partitionNum, bbox.getMinX, bbox.getMinY, bbox.getMaxX, bbox.getMaxY)
+      partitionNum,minX, minY, maxX, maxY)
 
     val geometryRDD2 = new GeometryRDD
     geometryRDD2.initialize(shapeFileMetaRDD2, hasAttribute = false)
-    geometryRDD2.CRSTransfor("epsg:32618", "epsg:4326")
+    //geometryRDD2.CRSTransfor("epsg:32618", "epsg:4326")
     geometryRDD2.partition(shapeFileMetaRDD1.getPartitioner)
     geometryRDD2.cache()
 
@@ -110,11 +112,10 @@ object SpatialJoin extends Logging{
     logDebug("********geometryRDD2*************\n")
 
 
-    val geometryRDD = geometryRDD1.spatialJoin(geometryRDD2)
-    geometryRDD.cache()
+    val joinedGeometryRDD = geometryRDD1.spatialJoin(geometryRDD2)
+    joinedGeometryRDD.cache()
 
-
-    logDebug("******** Number of intersected polygons: %d".format(geometryRDD.count()))
+    joinedGeometryRDD.foreach(tuple => println(tuple._2.size))
   }
 
 }
