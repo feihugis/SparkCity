@@ -1,5 +1,6 @@
 package edu.gmu.stc.vector.shapefile.reader;
 
+import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Polygon;
@@ -21,6 +22,7 @@ import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.referencing.factory.ReferencingObjectFactory;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.cs.CoordinateSystem;
 
@@ -66,7 +68,7 @@ public class GeometryReaderUtil {
     PrimitiveShape value = new PrimitiveShape(shpRecord);
 
     byte[] primitiveBytes = new byte[shapeFileMeta.getDbf_length()];
-    dbfDataInputStream.read(shapeFileMeta.getShp_offset(),
+    dbfDataInputStream.read(shapeFileMeta.getDbf_offset(),
                             primitiveBytes,
                             0,
                             shapeFileMeta.getDbf_length());
@@ -131,25 +133,35 @@ public class GeometryReaderUtil {
     return geometries;
   }
 
-  public static void saveAsShapefile(String filepath, List<Geometry> geometries) throws IOException {
+  public static void saveAsShapefile(String filepath, List<Geometry> geometries, String crs)
+      throws IOException, FactoryException {
     File file = new File(filepath);
     Map<String, Serializable> params = new HashMap<String, Serializable>();
     params.put(ShapefileDataStoreFactory.URLP.key, file.toURI().toURL());
     ShapefileDataStore ds = (ShapefileDataStore) new ShapefileDataStoreFactory().createNewDataStore(params);
 
-    System.out.println("SRID: " + geometries.get(0).getSRID());
-
     SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
-    //tb.setCRS(DefaultGeographicCRS.WGS84);
+
+    CoordinateReferenceSystem crsType = CRS.decode(crs);
+
+    tb.setCRS(crsType);
+
     tb.setName("shapefile");
     tb.add("the_geom", Polygon.class);
     tb.add("outPolyID", Long.class);
-    tb.add("IDPoly1", Long.class);
-    tb.add("IDPoly2", Long.class);
+    tb.add("minLat", Double.class);
+    tb.add("minLon", Double.class);
+    tb.add("maxLat", Double.class);
+    tb.add("maxLon", Double.class);
+
+    //tb.add("IDPoly1", Long.class);
+    //tb.add("IDPoly2", Long.class);
+
+
     ds.createSchema(tb.buildFeatureType());
     ds.setCharset(Charset.forName("GBK"));
 
-    ReferencingObjectFactory refFactory = new ReferencingObjectFactory();
+    //ReferencingObjectFactory refFactory = new ReferencingObjectFactory();
 
     FeatureWriter<SimpleFeatureType, SimpleFeature> writer = ds.getFeatureWriter(ds.getTypeNames()[0], Transaction.AUTO_COMMIT);
 
@@ -157,6 +169,11 @@ public class GeometryReaderUtil {
       SimpleFeature feature = writer.next();
       feature.setAttribute("the_geom", geometries.get(i));
       feature.setAttribute("outPolyID", i);
+      Envelope env = geometries.get(i).getEnvelopeInternal();
+      feature.setAttribute("minLat", env.getMinY());
+      feature.setAttribute("minLon", env.getMinX());
+      feature.setAttribute("maxLat", env.getMaxY());
+      feature.setAttribute("maxLon", env.getMaxX());
     }
 
     writer.write();

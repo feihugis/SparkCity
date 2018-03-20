@@ -7,9 +7,10 @@ import edu.gmu.stc.vector.shapefile.meta.ShapeFileMeta
 import edu.gmu.stc.vector.shapefile.reader.GeometryReaderUtil
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataInputStream, Path}
+import org.apache.spark.SparkContext
 import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
-import org.datasyslab.geospark.enums.IndexType
+import org.datasyslab.geospark.enums.{GridType, IndexType}
 import org.datasyslab.geospark.spatialPartitioning.SpatialPartitioner
 import org.geotools.geometry.jts.JTS
 import org.geotools.referencing.CRS
@@ -131,8 +132,65 @@ class GeometryRDD extends Logging{
     }).saveAsTextFile(outputLocation)
   }
 
-  def saveAsShapefile(filepath: String): Unit = {
+  def getPartitioner: SpatialPartitioner = this.partitioner
+
+  def saveAsShapefile(filepath: String, crs: String): Unit = {
     val geometries = this.geometryRDD.collect().toList.asJava
-    GeometryReaderUtil.saveAsShapefile(filepath, geometries)
+    GeometryReaderUtil.saveAsShapefile(filepath, geometries, crs)
+  }
+}
+
+object GeometryRDD {
+  def apply(sc: SparkContext, hadoopConfig: Configuration,
+            tableName: String,
+            gridTypeString: String, indexTypeString: String,
+            partitionNum: Int,
+            minX: Double,
+            minY: Double,
+            maxX: Double,
+            maxY: Double,
+            readAttributes: Boolean,
+            isCache: Boolean): GeometryRDD = {
+
+    val gridType = GridType.getGridType(gridTypeString)
+    val indexType = IndexType.getIndexType(indexTypeString)
+
+    val shapeFileMetaRDD = new ShapeFileMetaRDD(sc, hadoopConfig)
+    shapeFileMetaRDD.initializeShapeFileMetaRDDAndPartitioner(sc, tableName,
+      gridType, partitionNum, minX, minY, maxX, maxY)
+    val geometryRDD = new GeometryRDD
+    geometryRDD.initialize(shapeFileMetaRDD, readAttributes)
+    geometryRDD.partition(shapeFileMetaRDD.getPartitioner)
+    geometryRDD.indexPartition(indexType)
+
+    if (isCache) {
+      geometryRDD.cache()
+    }
+
+    geometryRDD
+  }
+
+  // use the partitioner from another geometryRDD to partition RDD
+  def apply(sc: SparkContext, hadoopConfig: Configuration,
+            tableName: String,
+            partitionNum: Int,
+            spatialPartitioner: SpatialPartitioner,
+            minX: Double,
+            minY: Double,
+            maxX: Double,
+            maxY: Double,
+            readAttributes: Boolean,
+            isCache: Boolean): GeometryRDD = {
+    val shapeFileMetaRDD = new ShapeFileMetaRDD(sc, hadoopConfig)
+    shapeFileMetaRDD.initializeShapeFileMetaRDDWithoutPartition(sc, tableName,
+      partitionNum, minX, minY, maxX, maxY)
+    val geometryRDD = new GeometryRDD
+    geometryRDD.initialize(shapeFileMetaRDD, readAttributes)
+    geometryRDD.partition(spatialPartitioner)
+    if (isCache) {
+      geometryRDD.cache()
+    }
+
+    geometryRDD
   }
 }

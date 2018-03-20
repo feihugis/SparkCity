@@ -52,64 +52,45 @@ object SpatialJoin extends Logging{
     val partitionNum = args(1).toInt  //24
 
     // Bounding box for querying shapefiles
+    /*val minX = -77.786
+    val minY = 38.352
+    val maxX = -76.914
+    val maxY = 39.151*/
+
     val minX = -76.6517
     val minY = 39.2622
     val maxX = -76.5579
     val maxY = 39.3212
 
     //Transform query bbox projection
-/*    val sourceCRS = CRS.decode("epsg:4326")
+    /*val sourceCRS = CRS.decode("epsg:4326")
     val targetCRS = CRS.decode("epsg:32618")
     val transform = CRS.findMathTransform(sourceCRS, targetCRS)
     val envelope = new Envelope(minX, minY, maxX, maxY)
     val envelope2D = JTS.getEnvelope2D(envelope, sourceCRS)
-    val bbox = JTS.transform(envelope, transform)
-
-    println(bbox)*/
+    val bbox = JTS.transform(envelope, transform)*/
 
 
-    val gridType = GridType.getGridType(args(2)) //EQUALGRID, HILBERT, RTREE, VORONOI, QUADTREE, KDBTREE
-    val indexType = IndexType.getIndexType(args(3))  //RTREE, QUADTREE
-
-    val shapeFileMetaRDD1 = new ShapeFileMetaRDD(sc, hConf)
+    val gridType = args(2) //EQUALGRID, HILBERT, RTREE, VORONOI, QUADTREE, KDBTREE
+    val indexType = args(3)  //RTREE, QUADTREE
     val table1 = tableNames(0)
-    shapeFileMetaRDD1.initializeShapeFileMetaRDDAndPartitioner(sc, table1, gridType, partitionNum, minX, minY, maxX, maxY)
-    val geometryRDD1 = new GeometryRDD
-    geometryRDD1.initialize(shapeFileMetaRDD1, hasAttribute = false)
-    geometryRDD1.partition(shapeFileMetaRDD1.getPartitioner)
-    geometryRDD1.indexPartition(indexType)
-    geometryRDD1.cache()
+    val table2 = tableNames(1)
 
-    val partitionNum1 = geometryRDD1.getGeometryRDD.mapPartitionsWithIndex({
-      case (index, itor) => {
-        List((index, itor.size)).toIterator
-      }
-    }).collect()
+    val geometryRDD1 = GeometryRDD(sc, hConf, table1, gridType, indexType, partitionNum, minX, minY, maxX, maxY, true, true)
 
     logDebug("********geometryRDD1*************\n")
     OperationUtil.show_partitionInfo(geometryRDD1.getGeometryRDD)
     logDebug("******Geometry Num****************" + geometryRDD1.getGeometryRDD.count())
-    logDebug("********geometryRDD1*************\n")
 
-    val shapeFileMetaRDD2 = new ShapeFileMetaRDD(sc, hConf)
-    val table2 = tableNames(1)
-
-    shapeFileMetaRDD2.initializeShapeFileMetaRDDWithoutPartition(sc, table2,
-      partitionNum,minX, minY, maxX, maxY)
-
-    val geometryRDD2 = new GeometryRDD
-    geometryRDD2.initialize(shapeFileMetaRDD2, hasAttribute = false)
-    //geometryRDD2.CRSTransfor("epsg:32618", "epsg:4326")
-    geometryRDD2.partition(shapeFileMetaRDD1.getPartitioner)
-    geometryRDD2.cache()
+    val geometryRDD2 = GeometryRDD(sc, hConf, table2, partitionNum, geometryRDD1.getPartitioner, minX, minY, maxX, maxY, true, true)
 
     logDebug("*************Counting GeometryRDD2 Time: " + OperationUtil.show_timing(geometryRDD2.getGeometryRDD.count()))
-
-
     logDebug("********geometryRDD2*************\n")
     OperationUtil.show_partitionInfo(geometryRDD2.getGeometryRDD)
     logDebug("******Geometry Num****************" + geometryRDD2.getGeometryRDD.count())
-    logDebug("********geometryRDD2*************\n")
+
+    geometryRDD2.getGeometryRDD.foreach(geometry => println(geometry.getUserData))
+
 
 
     val joinedGeometryRDD = geometryRDD1.spatialJoin(geometryRDD2)

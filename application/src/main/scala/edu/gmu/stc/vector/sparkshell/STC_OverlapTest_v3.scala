@@ -114,7 +114,7 @@ object STC_OverlapTest_v3 extends Logging{
 
     val filePath = args(4)
     if (filePath.endsWith("shp")) {
-      geometryRDD.saveAsShapefile(filePath)
+      geometryRDD.saveAsShapefile(filePath, "epsg:4326")
     } else {
       geometryRDD.saveAsGeoJSON(filePath)
     }
