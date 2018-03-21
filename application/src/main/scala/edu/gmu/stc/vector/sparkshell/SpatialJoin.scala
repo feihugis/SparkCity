@@ -52,15 +52,15 @@ object SpatialJoin extends Logging{
     val partitionNum = args(1).toInt  //24
 
     // Bounding box for querying shapefiles
-    /*val minX = -77.786
+    val minX = -77.786
     val minY = 38.352
     val maxX = -76.914
-    val maxY = 39.151*/
+    val maxY = 39.151
 
-    val minX = -76.6517
+    /*val minX = -76.6517
     val minY = 39.2622
     val maxX = -76.5579
-    val maxY = 39.3212
+    val maxY = 39.3212*/
 
     //Transform query bbox projection
     /*val sourceCRS = CRS.decode("epsg:4326")
@@ -75,28 +75,42 @@ object SpatialJoin extends Logging{
     val indexType = args(3)  //RTREE, QUADTREE
     val table1 = tableNames(0)
     val table2 = tableNames(1)
+    val table3 = tableNames(2)
 
     val geometryRDD1 = GeometryRDD(sc, hConf, table1, gridType, indexType, partitionNum, minX, minY, maxX, maxY, true, true)
 
     logDebug("********geometryRDD1*************\n")
     OperationUtil.show_partitionInfo(geometryRDD1.getGeometryRDD)
-    logDebug("******Geometry Num****************" + geometryRDD1.getGeometryRDD.count())
+    logInfo("******Geometry Num****************" + geometryRDD1.getGeometryRDD.count())
 
     val geometryRDD2 = GeometryRDD(sc, hConf, table2, partitionNum, geometryRDD1.getPartitioner, minX, minY, maxX, maxY, true, true)
 
     logDebug("*************Counting GeometryRDD2 Time: " + OperationUtil.show_timing(geometryRDD2.getGeometryRDD.count()))
     logDebug("********geometryRDD2*************\n")
     OperationUtil.show_partitionInfo(geometryRDD2.getGeometryRDD)
-    logDebug("******Geometry Num****************" + geometryRDD2.getGeometryRDD.count())
+    logInfo("******Geometry Num****************" + geometryRDD2.getGeometryRDD.count())
 
     geometryRDD2.getGeometryRDD.foreach(geometry => println(geometry.getUserData))
 
+    val joinedGeometryRDD12 = geometryRDD1.spatialJoin(geometryRDD2)
+    joinedGeometryRDD12.cache()
 
+    joinedGeometryRDD12.foreach(tuple => println(tuple._2.foldLeft[Double](0.0)((area, g) => area + g.getArea)))
 
-    val joinedGeometryRDD = geometryRDD1.spatialJoin(geometryRDD2)
-    joinedGeometryRDD.cache()
+    val geometryRDD3 = GeometryRDD(sc, hConf, table3, partitionNum, geometryRDD1.getPartitioner, minX, minY, maxX, maxY, true, true)
+    val joinedGeometryRDD13 = geometryRDD1.spatialJoin(geometryRDD3)
 
-    joinedGeometryRDD.foreach(tuple => println(tuple._2.size))
+    joinedGeometryRDD13.foreach {
+      case(geoBlock, geoItor) => {
+        val (t, area) = geoItor.foldLeft[(Double, Double)]((0.0, 0.0))((tuple, geo) => {
+          val area = geo.getArea
+          val t = geo.getUserData.asInstanceOf[String].toDouble * area
+
+          (tuple._1 + t, tuple._2 + area)
+        })
+
+        println(t/area + " : temperature")
+      }}
   }
 
 }
