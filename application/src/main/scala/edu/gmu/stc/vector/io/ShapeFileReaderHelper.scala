@@ -5,13 +5,14 @@ import edu.gmu.stc.hibernate.{DAOImpl, HibernateUtil, PhysicalNameStrategyImpl}
 import edu.gmu.stc.vector.shapefile.meta.ShapeFileMeta
 import edu.gmu.stc.vector.shapefile.reader.GeometryReaderUtil
 import org.apache.hadoop.conf.Configuration
+import org.apache.spark.internal.Logging
 
 import scala.collection.JavaConverters._
 
 /**
   * Created by Fei Hu on 3/21/18.
   */
-object ShapeFileReaderHelper {
+object ShapeFileReaderHelper extends Logging{
 
   def queryShapeMetaDatas(hconf: Configuration,
            tableName: String,
@@ -27,6 +28,7 @@ object ShapeFileReaderHelper {
     val dao = new DAOImpl[ShapeFileMeta]()
     dao.setSession(session)
     val hql = ShapeFileMeta.getSQLForOverlappedRows(tableName, minX, minY, maxX, maxY)
+    logInfo(hql)
 
     val shapeFileMetaList = dao.findByQuery(hql, classOf[ShapeFileMeta]).asScala.toList
     session.close()

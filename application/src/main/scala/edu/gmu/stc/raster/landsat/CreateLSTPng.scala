@@ -38,8 +38,6 @@ object CreateLSTPng {
 
       val tile = geotiff.tile.convert(DoubleConstantNoDataCellType)
 
-      Polygon
-
 
       println(geotiff.getClass)
       println(tile.getClass)
@@ -56,6 +54,8 @@ object CreateLSTPng {
         (r: Double, ir: Double, tirs: Double) => Calculations.lst(r, ir, tirs, ndvi_min, ndvi_max);
       }
     }
+
+    println(lst.getClass)
 
     val (min, max) = lst.findMinMaxDouble
 
