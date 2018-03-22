@@ -1,4 +1,4 @@
-package edu.gmu.stc.raster.landsat
+package edu.gmu.stc.raster.operation
 
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.vector.Polygon
