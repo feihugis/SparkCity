@@ -50,7 +50,7 @@ object ComputeLandscape extends Logging{
 
   def computeMeanNearestNeighborDistance(geoCover: Geometry, geoFeatureList: Iterable[Geometry]): Double = {
     val features = geoFeatureList.toArray
-    val distances: Array[Double] = new Array[Double](features.length)(Double.MaxValue)
+    val distances: Array[Double] = Array.fill[Double](features.length)(Double.MaxValue)
 
 
     for (i <- features.indices) {
@@ -70,10 +70,13 @@ object ComputeLandscape extends Logging{
       case ((areaSum_, perimeterSum_, perimeterAreaSum_), geoFeature) => {
         val perimeter = geoFeature.getLength
         val area = geoFeature.getArea
+
         (areaSum_ + area, perimeterSum_ + perimeter, perimeterAreaSum_ + perimeter * sqrt(area))
       }
     }
 
-    (1 - perimeterSum / perimeterAreaSum) / (1 - sqrt(areaSum))
+    println("perimeterSum: ", perimeterSum, " perimeterAreaSum: " + perimeterAreaSum)
+
+    (1 - perimeterSum / perimeterAreaSum) / (1 - 1/sqrt(geoCover.getArea))
   }
 }

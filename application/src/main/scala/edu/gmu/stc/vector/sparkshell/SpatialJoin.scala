@@ -13,6 +13,8 @@ import org.apache.spark.internal.Logging
 import org.datasyslab.geospark.enums.{GridType, IndexType}
 import org.geotools.geometry.jts.JTS
 import org.geotools.referencing.CRS
+import edu.gmu.vector.landscape.ComputeLandscape._
+import org.apache.spark.sql.SQLContext
 
 /**
   * Created by Fei Hu on 3/11/18.
@@ -95,9 +97,22 @@ object SpatialJoin extends Logging{
     val joinedGeometryRDD12 = geometryRDD1.spatialJoin(geometryRDD2)
     joinedGeometryRDD12.cache()
 
-    joinedGeometryRDD12.foreach(tuple => println(tuple._2.foldLeft[Double](0.0)((area, g) => area + g.getArea)))
+    val landscapeMetricRDD = joinedGeometryRDD12.map {
+      case (geoCover, geoFeatureList) => {
+        (computeCoverPercent(geoCover, geoFeatureList),
+        computeMeanNearestNeighborDistance(geoCover, geoFeatureList),
+        computePatchCohesionIndex(geoCover, geoFeatureList))
+      }
+    }
 
-    val geometryRDD3 = GeometryRDD(sc, hConf, table3, partitionNum, geometryRDD1.getPartitioner, minX, minY, maxX, maxY, true, true)
+    val sqlContext = new SQLContext(sc)
+    import sqlContext.implicits._
+
+    val df = landscapeMetricRDD.toDF()
+    df.show(100)
+    //joinedGeometryRDD12.foreach(tuple => println(tuple._2.foldLeft[Double](0.0)((area, g) => area + g.getArea)))
+
+    /*val geometryRDD3 = GeometryRDD(sc, hConf, table3, partitionNum, geometryRDD1.getPartitioner, minX, minY, maxX, maxY, true, true)
     val joinedGeometryRDD13 = geometryRDD1.spatialJoin(geometryRDD3)
 
     joinedGeometryRDD13.foreach {
@@ -110,7 +125,8 @@ object SpatialJoin extends Logging{
         })
 
         println(t/area + " : temperature")
-      }}
+      }
+    }*/
   }
 
 }
