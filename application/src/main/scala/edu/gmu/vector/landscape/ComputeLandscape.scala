@@ -75,7 +75,7 @@ object ComputeLandscape extends Logging{
       }
     }
 
-    println("perimeterSum: ", perimeterSum, " perimeterAreaSum: " + perimeterAreaSum)
+    //println("perimeterSum: ", perimeterSum, " perimeterAreaSum: " + perimeterAreaSum)
 
     (1 - perimeterSum / perimeterAreaSum) / (1 - 1/sqrt(geoCover.getArea))
   }

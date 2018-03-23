@@ -4,6 +4,7 @@ import com.vividsolutions.jts.geom._
 import edu.gmu.stc.raster.io.GeoTiffReaderHelper
 import edu.gmu.stc.raster.landsat.{Calculations, MaskBandsRandGandNIR}
 import edu.gmu.stc.vector.io.ShapeFileReaderHelper
+import edu.gmu.stc.vector.shapefile.reader.GeometryReaderUtil
 import geotrellis.raster.{ArrayMultibandTile, DoubleConstantNoDataCellType, Tile}
 import geotrellis.vector.Extent
 import org.apache.hadoop.conf.Configuration
@@ -70,12 +71,13 @@ object ComputeLST {
     val hConf = new Configuration()
     hConf.addResource(new Path("/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml"))
 
-    val (extent, lstTile) = computeLST(hConf, landsatFilePath)
-    println(extent.xmin, extent.ymin)
-
     val sourceCRS = CRS.decode("epsg:32618", true)
     val targetCRS = CRS.decode("epsg:4269", true)
     val transform = CRS.findMathTransform(sourceCRS, targetCRS)
+
+    val (extent, lstTile) = computeLST(hConf, landsatFilePath)
+    println(extent.xmin, extent.ymin)
+
     val envelope = new Envelope(extent.xmin, extent.xmax, extent.ymin, extent.ymax)
     println(envelope)
     val bbox = JTS.transform(envelope, transform)
@@ -93,9 +95,7 @@ object ComputeLST {
 
     val polygonsWithTemperature = clipToPolygons(extent2, lstTile, polygons)
 
-    polygonsWithTemperature.foreach(p => println(p.getUserData))
-
-
+    GeometryReaderUtil.saveAsShapefile("/Users/feihu/Documents/GitHub/SparkCity/data/lst_polygon_va/lst_polygon_va.shp", polygonsWithTemperature.asJava, "epsg:4269")
   }
 
 

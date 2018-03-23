@@ -153,10 +153,7 @@ public class GeometryReaderUtil {
     tb.add("minLon", Double.class);
     tb.add("maxLat", Double.class);
     tb.add("maxLon", Double.class);
-
-    //tb.add("IDPoly1", Long.class);
-    //tb.add("IDPoly2", Long.class);
-
+    tb.add("att", Double.class);
 
     ds.createSchema(tb.buildFeatureType());
     ds.setCharset(Charset.forName("GBK"));
@@ -174,6 +171,7 @@ public class GeometryReaderUtil {
       feature.setAttribute("minLon", env.getMinX());
       feature.setAttribute("maxLat", env.getMaxY());
       feature.setAttribute("maxLon", env.getMaxX());
+      feature.setAttribute("att", geometries.get(i).getUserData());
     }
 
     writer.write();
