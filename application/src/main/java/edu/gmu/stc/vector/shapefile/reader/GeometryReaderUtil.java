@@ -136,6 +136,7 @@ public class GeometryReaderUtil {
   public static void saveAsShapefile(String filepath, List<Geometry> geometries, String crs)
       throws IOException, FactoryException {
     File file = new File(filepath);
+    file.getParentFile().mkdirs();
     Map<String, Serializable> params = new HashMap<String, Serializable>();
     params.put(ShapefileDataStoreFactory.URLP.key, file.toURI().toURL());
     ShapefileDataStore ds = (ShapefileDataStore) new ShapefileDataStoreFactory().createNewDataStore(params);

@@ -3,6 +3,7 @@ package edu.gmu.stc.analysis
 import com.vividsolutions.jts.geom._
 import edu.gmu.stc.raster.io.GeoTiffReaderHelper
 import edu.gmu.stc.raster.landsat.{Calculations, MaskBandsRandGandNIR}
+import edu.gmu.stc.vector.VectorUtil
 import edu.gmu.stc.vector.io.ShapeFileReaderHelper
 import edu.gmu.stc.vector.shapefile.reader.GeometryReaderUtil
 import geotrellis.raster.{ArrayMultibandTile, DoubleConstantNoDataCellType, Tile}
@@ -51,6 +52,11 @@ object ComputeLST {
         mp.setUserData(meanValue)
         mp
       }
+      case s: Any => {
+        println("***********************")
+        println(s.getClass)
+        s
+      }
     }
   }
 
@@ -59,9 +65,9 @@ object ComputeLST {
     val hConf = new Configuration()
     hConf.addResource(new Path("/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml"))
 
-    val sourceCRS = CRS.decode("epsg:32618", true)
-    val targetCRS = CRS.decode("epsg:4269", true)
-    val transform = CRS.findMathTransform(sourceCRS, targetCRS)
+    val sourceCRS = "epsg:32618"
+    val targetCRS = "epsg:4269"
+    val transform = VectorUtil.getCRSTransform(sourceCRS, targetCRS, true)
 
     val (extent, lstTile) = computeLST(hConf, landsatFilePath)
     println(extent.xmin, extent.ymin)
@@ -71,9 +77,9 @@ object ComputeLST {
     val bbox = JTS.transform(envelope, transform)
     println(bbox)
 
-    val extent2 = new Extent(bbox.getMinX, bbox.getMinY, bbox.getMaxX, bbox.getMaxY)
+    val extentTransformed = new Extent(bbox.getMinX, bbox.getMinY, bbox.getMaxX, bbox.getMaxY)
 
-    val tableName = "cb_2016_51_bg_500k"
+    val tableName = "gis_osm_landuse_a_free_1"
     val polygons = ShapeFileReaderHelper.read(hConf, tableName,
       bbox.getMinX,
       bbox.getMinY,
@@ -81,9 +87,9 @@ object ComputeLST {
       bbox.getMaxY,
       true)
 
-    val polygonsWithTemperature = clipToPolygons(extent2, lstTile, polygons)
+    val polygonsWithTemperature = clipToPolygons(extentTransformed, lstTile, polygons)
 
-    GeometryReaderUtil.saveAsShapefile("/Users/feihu/Documents/GitHub/SparkCity/data/lst_polygon_va/lst_polygon_va.shp", polygonsWithTemperature.asJava, "epsg:4269")
+    GeometryReaderUtil.saveAsShapefile("/Users/feihu/Documents/GitHub/SparkCity/data/lst_landuse_va/lst_landuse_va.shp", polygonsWithTemperature.asJava, "epsg:4269")
   }
 
 

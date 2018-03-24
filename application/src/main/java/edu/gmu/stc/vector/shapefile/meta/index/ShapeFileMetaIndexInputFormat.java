@@ -45,6 +45,10 @@ public class ShapeFileMetaIndexInputFormat extends CombineFileInputFormat<ShapeK
         // get input paths and assign a split for every single path
         String path = job.getConfiguration().get(ConfigParameter.INPUT_DIR_PATH);
         String[] paths = path.split(",");
+        for (int i = 0; i < paths.length; i++) {
+          paths[i] = paths[i].trim().replace("\t", "").replace("\n", "");
+        }
+
         List<InputSplit> splits = new ArrayList<>();
         for(int i = 0; i < paths.length; ++i){
             job.getConfiguration().set(ConfigParameter.INPUT_DIR_PATH, paths[i]);
