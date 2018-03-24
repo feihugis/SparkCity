@@ -73,7 +73,7 @@ object SpatialJoin {
     val sqlContext = new SQLContext(sc)
     import sqlContext.implicits._
 
-    //featureRDD.toDF("id", "temperature", "CP", "MNND", "PCI").coalesce(1).write.csv("data/lst_va.csv")
+    featureRDD.toDF("id", "temperature", "CP", "MNND", "PCI").coalesce(1).write.csv("data/lst_va.csv")
 
     val training = featureRDD.map(
       row =>
@@ -82,22 +82,7 @@ object SpatialJoin {
 
     training.coalesce(1).write.format("libsvm").save("data/lst_va_libsvm")
 
-    //val training = featureRDD.map( row => (row._2, Vectors.dense(row._3, row._4, row._5))).toDF("label", "features").cache()
-
     training.show(300)
-
- /*   // Building the model
-
-    val lr = new LinearRegression()
-      .setMaxIter(10)
-      .setRegParam(0.3)
-      .setElasticNetParam(0.8)
-
-    // Fit the model
-    val lrModel = lr.fit(training)
-
-    // Print the coefficients and intercept for linear regression
-    println(s"Coefficients: ${lrModel.coefficients} Intercept: ${lrModel.intercept}")*/
   }
 
 

@@ -19,7 +19,8 @@ import scala.collection.JavaConverters._
   */
 object ComputeLST {
 
-  def computeLST(hConf: Configuration, landsatMulBandFilePath: Path): (Extent, Tile) = {
+  def computeLST(hConf: Configuration,
+                 landsatMulBandFilePath: Path): (Extent, Tile) = {
     val geotiff = GeoTiffReaderHelper.readMultiband(landsatMulBandFilePath, hConf)
     val tile = geotiff.tile.convert(DoubleConstantNoDataCellType)
     val (ndvi_min, ndvi_max) = tile.combineDouble(MaskBandsRandGandNIR.R_BAND,
@@ -38,29 +39,16 @@ object ComputeLST {
     (geotiff.extent, lstTile)
   }
 
-  def computeLST(hConf: Configuration,
-                 landsatMulBandFilePath: Path,
-                 polygons: List[Polygon]): List[Polygon] = {
-
-    val (extent, lstTile) = computeLST(hConf, landsatMulBandFilePath)
-
-    polygons.map(polygon => {
-      val temperature = lstTile.polygonalMean(extent, polygon)
-      polygon.setUserData(temperature)
-      polygon
-    })
-  }
-
   def clipToPolygons(extent: Extent, tile: Tile, polygons: List[Geometry]): List[Geometry] = {
     polygons.map {
       case p: Polygon => {
-        val temperature = tile.polygonalMean(extent, p)
-        p.setUserData(temperature)
+        val meanValue = tile.polygonalMean(extent, p)
+        p.setUserData(meanValue)
         p
       }
       case mp: MultiPolygon => {
-        val temperature = tile.polygonalMean(extent, mp)
-        mp.setUserData(temperature)
+        val meanValue = tile.polygonalMean(extent, mp)
+        mp.setUserData(meanValue)
         mp
       }
     }

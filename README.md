@@ -32,3 +32,9 @@ media data.
 ## Resources
  * [FRAGSTATS: Spatial Pattern Analysis Program for Categorical Maps](https://www.umass.edu/landeco/research/fragstats/fragstats.html) 
  * [Atmospheric Correctin parameter Calculator](https://atmcorr.gsfc.nasa.gov/)
+
+
+## Computing
+ * LST for different landuse type
+ * Locations for highest-temperature area
+ 

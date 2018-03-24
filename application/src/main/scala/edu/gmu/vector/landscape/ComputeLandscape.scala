@@ -50,17 +50,18 @@ object ComputeLandscape extends Logging{
 
   def computeMeanNearestNeighborDistance(geoCover: Geometry, geoFeatureList: Iterable[Geometry]): Double = {
     val features = geoFeatureList.toArray
-    val distances: Array[Double] = Array.fill[Double](features.length)(Double.MaxValue)
-
+    val max_val = 1800000000.0
+    val distances: Array[Double] = Array.fill[Double](features.length)(max_val)
 
     for (i <- features.indices) {
-      for (j <- i + 1 until(features.length)) {
+      for (j <- i + 1 until features.length) {
         val dist = features(i).distance(features(j))
         if (distances(i) > dist) distances(i) = dist
-        if (distances(j) > dist) distances(i) = dist
+        if (distances(j) > dist) distances(j) = dist
       }
     }
 
+    //distances.filter(dist => dist != 1800000000.0)
     distances.sum/distances.length
   }
 
