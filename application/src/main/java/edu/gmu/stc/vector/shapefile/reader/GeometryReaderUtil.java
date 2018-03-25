@@ -32,11 +32,15 @@ import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import edu.gmu.stc.vector.shapefile.meta.ShapeFileMeta;
+import edu.gmu.stc.vector.sourcedata.Attribute;
 
 /**
  * Created by Fei Hu on 1/26/18.
@@ -175,6 +179,69 @@ public class GeometryReaderUtil {
       feature.setAttribute("maxLon", env.getMaxX());
       feature.setAttribute("att", geometries.get(i).getUserData());
     }
+
+    writer.write();
+    writer.close();
+    ds.dispose();
+  }
+
+  public static void saveAsShapefile(String filepath,
+                                     String crs,
+                                     Class geometryType,
+                                     List<Geometry> geometries,
+                                     List<Attribute> attributeScheme)
+      throws IOException, FactoryException {
+    File file = new File(filepath);
+    file.getParentFile().mkdirs();
+
+    Map<String, Serializable> params = new HashMap<String, Serializable>();
+    params.put(ShapefileDataStoreFactory.URLP.key, file.toURI().toURL());
+    ShapefileDataStore ds = (ShapefileDataStore) new ShapefileDataStoreFactory().createNewDataStore(params);
+
+    SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
+
+    CoordinateReferenceSystem crsType = CRS.decode(crs);
+    tb.setCRS(crsType);
+
+    tb.setName("shapefile");
+
+    tb.add("the_geom", geometryType);
+    // Sort the attributes by their indices
+    Collections.sort(attributeScheme, new Comparator<Attribute>() {
+      @Override
+      public int compare(Attribute o1, Attribute o2) {
+        return o1.getIndex() - o2.getIndex();
+      }
+    });
+
+    for (Attribute attribute : attributeScheme) {
+      tb.add(attribute.getName(), attribute.getType());
+    }
+
+    ds.createSchema(tb.buildFeatureType());
+    ds.setCharset(Charset.forName("GBK"));
+
+    FeatureWriter<SimpleFeatureType, SimpleFeature> writer = ds.getFeatureWriter(ds.getTypeNames()[0],
+                                                                                 Transaction.AUTO_COMMIT);
+
+    boolean hasAttribute = !attributeScheme.isEmpty();
+    Iterator<Geometry> geometryIterator = geometries.iterator();
+    while (geometryIterator.hasNext()) {
+      Geometry geometry = geometryIterator.next();
+      SimpleFeature feature = writer.next();
+
+      // populate the geometry
+      feature.setAttribute("the_geom", geometry);
+      // populate the attributes
+      if (hasAttribute) {
+        String[] attrs = geometry.getUserData().toString().split("\t");
+        //System.out.println(geometry.getUserData().toString());
+        for (int i = 0; i < attrs.length; i++) {
+          feature.setAttribute(attributeScheme.get(i).getName(), attrs[i]);
+        }
+      }
+    }
+
 
     writer.write();
     writer.close();
