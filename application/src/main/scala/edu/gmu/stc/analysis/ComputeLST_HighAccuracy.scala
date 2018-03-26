@@ -149,11 +149,17 @@ object ComputeLST_HighAccuracy extends Logging{
 
     val attributeSchema = OSMAttributeUtil.getLayerAtrributes(computeLSTConfig.osmLayerName)
 
-    GeometryReaderUtil.saveAsShapefile(computeLSTConfig.outputShpPath,
+    GeometryReaderUtil.saveAsShapefile(
+      computeLSTConfig.outputShpPath,
       computeLSTConfig.vectorCRS,
       classOf[Polygon],
       polygonsWithLST.asJava,
       attributeSchema)
+
+    GeometryReaderUtil.saveDbfAsCSV(
+      polygonsWithLST.asJava,
+      attributeSchema,
+      computeLSTConfig.outputShpPath.replace(".shp", ".csv"))
   }
 
   def main(args: Array[String]): Unit = {
@@ -224,7 +230,7 @@ object ComputeLST_HighAccuracy extends Logging{
       outputShpPath = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va_block/lst_va_block.shp"
     )
 
-    val configs = Array(buildingsConfig, landuseConfig, poisConfig, trafficConfig, waterConfig, blockConfig)
+    val configs = Array(/*buildingsConfig, landuseConfig, poisConfig, trafficConfig, waterConfig,*/ blockConfig)
     configs.foreach(config => {
       addLSTToOSMLayer(config)
       logInfo("Finished the processing of " + config.vectorIndexTableName)

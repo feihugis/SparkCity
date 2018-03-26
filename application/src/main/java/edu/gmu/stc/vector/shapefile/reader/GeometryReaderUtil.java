@@ -3,12 +3,14 @@ package edu.gmu.stc.vector.shapefile.reader;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.util.Progressable;
 import org.datasyslab.geospark.formatMapper.shapefileParser.parseUtils.dbf.DbfParseUtil;
 import org.datasyslab.geospark.formatMapper.shapefileParser.shapes.PrimitiveShape;
 import org.datasyslab.geospark.formatMapper.shapefileParser.shapes.ShpRecord;
@@ -26,9 +28,14 @@ import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.cs.CoordinateSystem;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Serializable;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -190,12 +197,23 @@ public class GeometryReaderUtil {
                                      Class geometryType,
                                      List<Geometry> geometries,
                                      List<Attribute> attributeScheme)
-      throws IOException, FactoryException {
-    File file = new File(filepath);
-    file.getParentFile().mkdirs();
+      throws IOException, FactoryException, URISyntaxException {
+    /*File file = new File(filepath);
+    file.getParentFile().mkdirs();*/
+    Configuration hConf = new Configuration();
+    URI fsURI = new URI(hConf.get("fs.default.name"));
+
+    FileSystem fs = FileSystem.get(fsURI, hConf);
+    Path file = new Path(fsURI + filepath);
+
+    if (fs.exists(file)) {
+      fs.delete(file, true);
+    }
+
+    //OutputStream outputStream = fs.create(file);
 
     Map<String, Serializable> params = new HashMap<String, Serializable>();
-    params.put(ShapefileDataStoreFactory.URLP.key, file.toURI().toURL());
+    params.put(ShapefileDataStoreFactory.URLP.key, file.toUri().toURL());
     ShapefileDataStore ds = (ShapefileDataStore) new ShapefileDataStoreFactory().createNewDataStore(params);
 
     SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
@@ -248,6 +266,42 @@ public class GeometryReaderUtil {
     ds.dispose();
   }
 
+  public static void saveDbfAsCSV(List<Geometry> geometries,
+                                  List<Attribute> attributeSchema,
+                                  String csvFilePath)
+      throws IOException {
+    StringBuilder stringBuilder = new StringBuilder();
+    for (Attribute attribute : attributeSchema) {
+      stringBuilder.append(attribute.getName() + "\t");
+    }
 
+    stringBuilder.append("x\t");
+    stringBuilder.append("y");
+    stringBuilder.append("\n");
 
+    for (Geometry geometry : geometries) {
+      stringBuilder.append(geometry.getUserData());
+      stringBuilder.append("\t");
+      Point center = geometry.getCentroid();
+      stringBuilder.append(center.getX());
+      stringBuilder.append("\t");
+      stringBuilder.append(center.getY());
+      stringBuilder.append("\n");
+    }
+
+    Configuration hConf = new Configuration();
+    FileSystem fs = FileSystem.get(hConf);
+    Path csvFile = new Path(csvFilePath);
+    if (fs.exists(csvFile)) {
+      fs.delete(csvFile, true);
+    }
+
+    OutputStream outputStream = fs.create(csvFile);
+    BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
+    bufferedWriter.write(stringBuilder.toString()
+                             .replace(",", " ")
+                             .replace("\t", ","));
+    bufferedWriter.close();
+    fs.close();
+  }
 }
