@@ -70,7 +70,7 @@ object ComputeLST_LowAccuracy extends Logging{
       true)
 
     val polygonsWithLST = RasterOperation
-      .clipToPolygons(bbox, lstTile, polygons)
+      .clipToPolygons(bbox, Array(lstTile), polygons)
       .filter(g => !g.getUserData.toString.contains("NaN"))
 
     logInfo("*********** Number of Polygons: " + polygonsWithLST.size)
@@ -107,7 +107,7 @@ object ComputeLST_LowAccuracy extends Logging{
       true)
 
     val polygonsWithLST = RasterOperation
-      .clipToPolygons(bbox, lstTile, polygons)
+      .clipToPolygons(bbox, Array(lstTile), polygons)
       .filter(g => !g.getUserData.toString.contains("NaN"))
 
     logInfo("*********** Number of Polygons: " + polygonsWithLST.size)

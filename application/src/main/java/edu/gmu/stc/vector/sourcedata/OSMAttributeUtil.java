@@ -44,11 +44,15 @@ public class OSMAttributeUtil {
     Attribute fclass = new Attribute(2, "fclass", String.class);
     Attribute name = new Attribute(3, "name", String.class);
     Attribute temperature = new Attribute(4, "temp", Double.class);
+    Attribute ndvi = new Attribute(5, "ndvi", Double.class);
+
     attributes.add(osm_id);
     attributes.add(code);
     attributes.add(fclass);
     attributes.add(name);
     attributes.add(temperature);
+    attributes.add(ndvi);
+
     return attributes;
   }
 
@@ -59,11 +63,15 @@ public class OSMAttributeUtil {
     Attribute fclass = new Attribute(2, "fclass", String.class);
     Attribute name = new Attribute(3, "name", String.class);
     Attribute temperature = new Attribute(4, "temp", Double.class);
+    Attribute ndvi = new Attribute(5, "ndvi", Double.class);
+
     attributes.add(osm_id);
     attributes.add(code);
     attributes.add(fclass);
     attributes.add(name);
     attributes.add(temperature);
+    attributes.add(ndvi);
+
     return attributes;
   }
 
@@ -75,12 +83,15 @@ public class OSMAttributeUtil {
     Attribute name = new Attribute(3, "name", String.class);
     Attribute type = new Attribute(4, "type", String.class);
     Attribute temperature = new Attribute(5, "temp", Double.class);
+    Attribute ndvi = new Attribute(6, "ndvi", Double.class);
+
     attributes.add(osm_id);
     attributes.add(code);
     attributes.add(fclass);
     attributes.add(name);
     attributes.add(type);
     attributes.add(temperature);
+    attributes.add(ndvi);
     return attributes;
   }
 
@@ -91,11 +102,14 @@ public class OSMAttributeUtil {
     Attribute fclass = new Attribute(2, "fclass", String.class);
     Attribute name = new Attribute(3, "name", String.class);
     Attribute temperature = new Attribute(4, "temp", Double.class);
+    Attribute ndvi = new Attribute(5, "ndvi", Double.class);
+
     attributes.add(osm_id);
     attributes.add(code);
     attributes.add(fclass);
     attributes.add(name);
     attributes.add(temperature);
+    attributes.add(ndvi);
     return attributes;
   }
 
@@ -106,11 +120,14 @@ public class OSMAttributeUtil {
     Attribute fclass = new Attribute(2, "fclass", String.class);
     Attribute name = new Attribute(3, "name", String.class);
     Attribute temperature = new Attribute(4, "temp", Double.class);
+    Attribute ndvi = new Attribute(5, "ndvi", Double.class);
+
     attributes.add(osm_id);
     attributes.add(code);
     attributes.add(fclass);
     attributes.add(name);
     attributes.add(temperature);
+    attributes.add(ndvi);
     return attributes;
   }
 
@@ -127,6 +144,7 @@ public class OSMAttributeUtil {
     Attribute ALAND = new Attribute(8, "ALAND", String.class);
     Attribute AWATER = new Attribute(9, "AWATER", String.class);
     Attribute temperature = new Attribute(10, "temp", Double.class);
+    Attribute ndvi = new Attribute(11, "ndvi", Double.class);
 
     attributes.add(STATEFP);
     attributes.add(COUNTYFP);
@@ -139,6 +157,7 @@ public class OSMAttributeUtil {
     attributes.add(ALAND);
     attributes.add(AWATER);
     attributes.add(temperature);
+    attributes.add(ndvi);
     return attributes;
   }
 

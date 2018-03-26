@@ -25,15 +25,17 @@ import scala.collection.JavaConverters._
   */
 object ComputeLST_HighAccuracy extends Logging{
 
-  def computeLST(hConf: Configuration,
-                 landsatMulBandFilePath: Path): (Extent, Tile) = {
+  def computeLSTAndNDVI(hConf: Configuration,
+                        landsatMulBandFilePath: Path): (Extent, Tile, Tile) = {
     val geotiff = GeoTiffReaderHelper.readMultiband(landsatMulBandFilePath, hConf)
     val tile = geotiff.tile.convert(DoubleConstantNoDataCellType)
-    val (ndvi_min, ndvi_max) = tile.combineDouble(MaskBandsRandGandNIR.R_BAND,
+    val ndviTile = tile.combineDouble(MaskBandsRandGandNIR.R_BAND,
       MaskBandsRandGandNIR.NIR_BAND,
       MaskBandsRandGandNIR.TIRS_BAND) {
       (r: Double, ir: Double, tirs: Double) => Calculations.ndvi(r, ir);
-    }.findMinMaxDouble
+    }
+
+    val (ndvi_min, ndvi_max) = ndviTile.findMinMaxDouble
 
 
     val lstTile = tile.combineDouble(MaskBandsRandGandNIR.R_BAND,
@@ -43,7 +45,7 @@ object ComputeLST_HighAccuracy extends Logging{
     }
 
    //GeoTiff(lstTile, geotiff.extent, CRS.fromName("epsg:32618")).write("lst_test.tif")
-    (geotiff.extent, lstTile)
+    (geotiff.extent, lstTile, ndviTile)
   }
 
   def extractLSTMeanValueFromTileByGeometry(hConfFile: String,
@@ -77,7 +79,7 @@ object ComputeLST_HighAccuracy extends Logging{
       .map(geometry => JTS.transform(geometry, osm2raster_CRSTransform))
 
     val polygonsWithLST = RasterOperation
-      .clipToPolygons(rasterExtent, lstTile, polygons)
+      .clipToPolygons(rasterExtent, Array(lstTile), polygons)
       .filter(g => !g.getUserData.toString.contains("NaN"))
       .map(geometry => JTS.transform(geometry, raster2osm_CRSTransform))
 
@@ -95,7 +97,7 @@ object ComputeLST_HighAccuracy extends Logging{
     val hConf = new Configuration()
     hConf.addResource(new Path(hConfFile))
 
-    val (rasterExtent, lstTile) = computeLST(hConf, new Path(rasterFile))
+    val (rasterExtent, lstTile, ndviTile) = computeLSTAndNDVI(hConf, new Path(rasterFile))
 
     val raster2osm_CRSTransform = VectorUtil.getCRSTransform(rasterCRS, vectorCRS, longitudeFirst)
     val osm2raster_CRSTransform = VectorUtil.getCRSTransform(vectorCRS, rasterCRS, longitudeFirst)
@@ -118,7 +120,7 @@ object ComputeLST_HighAccuracy extends Logging{
       .map(geometry => JTS.transform(geometry, osm2raster_CRSTransform))
 
     val polygonsWithLST = RasterOperation
-      .clipToPolygons(rasterExtent, lstTile, polygons)
+      .clipToPolygons(rasterExtent, Array(lstTile, ndviTile), polygons)
       .filter(g => !g.getUserData.toString.contains("NaN"))
       .map(geometry => JTS.transform(geometry, raster2osm_CRSTransform))
 

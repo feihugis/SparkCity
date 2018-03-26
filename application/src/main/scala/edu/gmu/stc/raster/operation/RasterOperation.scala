@@ -11,45 +11,65 @@ import geotrellis.vector.{Extent}
 object RasterOperation {
 
   def clipToPolygons(extent: Extent,
-                     tile: Tile,
+                     tiles: Array[Tile],
                      geometries: List[Geometry]): List[Geometry] = {
 
-    val cellWidth = (extent.xmax - extent.xmin) / tile.cols
-    val cellHeight = (extent.ymax - extent.ymin) / tile.rows
+    if (tiles.exists(tile => tile.rows != tiles.head.rows || tile.cols != tiles.head.cols)) {
+      throw new AssertionError("There are two input tiles with different size")
+    }
+
+
+    val cellWidth = (extent.xmax - extent.xmin) / tiles.head.cols
+    val cellHeight = (extent.ymax - extent.ymin) / tiles.head.rows
 
     geometries.map {
 
       case point: Point => {
-        val meanValue = getPixelValueFromTile(point, tile, extent, cellWidth, cellHeight)
-        if (meanValue.isNaN) {
+        val meanValues = tiles.map(
+          tile => getPixelValueFromTile(point, tile, extent, cellWidth, cellHeight)
+        )
+
+        meanValues.foreach(meanValue => {
           point.setUserData(point.getUserData + "\t" + meanValue)
-        } else {
-          point.setUserData(point.getUserData + "\t" + meanValue)
-        }
+        })
+
         point
       }
 
       case polygon: Polygon => {
-        val meanValue = tile.polygonalMean(extent, polygon)
-        if (meanValue.isNaN) {
-          val point = polygon.getCentroid
-          val value = getPixelValueFromTile(point, tile, extent, cellWidth, cellHeight)
-          polygon.setUserData(polygon.getUserData + "\t" + value)
-        } else {
-          polygon.setUserData(polygon.getUserData + "\t" + meanValue)
+        val tileMeanValuePairs = tiles.map(tile => (tile, tile.polygonalMean(extent, polygon)))
+
+        tileMeanValuePairs.foreach{
+          case (tile, meanValue) => {
+            if (meanValue.isNaN) {
+              val point = polygon.getCentroid
+              val value = getPixelValueFromTile(point, tile, extent, cellWidth, cellHeight)
+              polygon.setUserData(polygon.getUserData + "\t" + value)
+            } else {
+              polygon.setUserData(polygon.getUserData + "\t" + meanValue)
+            }
+          }
         }
+
         polygon
       }
 
       case multiPolygon: MultiPolygon => {
-        val meanValue = tile.polygonalMean(extent, multiPolygon)
-        if (meanValue.isNaN) {
-          val point = multiPolygon.getCentroid
-          val value = getPixelValueFromTile(point, tile, extent)
-          multiPolygon.setUserData(multiPolygon.getUserData + "\t" + value)
-        } else {
-          multiPolygon.setUserData(multiPolygon.getUserData + "\t" + meanValue)
+
+        val tileMeanValuePairs = tiles.map(tile => (tile, tile.polygonalMean(extent, multiPolygon)))
+
+        tileMeanValuePairs.foreach{
+          case (tile, meanValue) => {
+            if (meanValue.isNaN) {
+              val point = multiPolygon.getCentroid
+              val value = getPixelValueFromTile(point, tile, extent, cellWidth, cellHeight)
+              multiPolygon.setUserData(multiPolygon.getUserData + "\t" + value)
+            } else {
+              multiPolygon.setUserData(multiPolygon.getUserData + "\t" + meanValue)
+            }
+          }
         }
+
         multiPolygon
       }
 

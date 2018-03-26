@@ -275,8 +275,9 @@ public class GeometryReaderUtil {
       stringBuilder.append(attribute.getName() + "\t");
     }
 
-    stringBuilder.append("x\t");
-    stringBuilder.append("y");
+    stringBuilder.append("longitude\t");
+    stringBuilder.append("latitude\t");
+    stringBuilder.append("area");
     stringBuilder.append("\n");
 
     for (Geometry geometry : geometries) {
@@ -286,6 +287,8 @@ public class GeometryReaderUtil {
       stringBuilder.append(center.getX());
       stringBuilder.append("\t");
       stringBuilder.append(center.getY());
+      stringBuilder.append("\t");
+      stringBuilder.append(geometry.getArea());
       stringBuilder.append("\n");
     }
 
