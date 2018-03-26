@@ -5,6 +5,8 @@ from sklearn.metrics import mean_squared_error, r2_score
 
 import pandas as pd
 
+from analysis.csv_util import load_data
+
 POLYGON_ID = "id"
 TEMPERATURE = "temperature"
 CP = "CP"
@@ -18,9 +20,7 @@ LABEL_COLUMN = [TEMPERATURE]
 csvfile = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va.csv/lst_va.csv"
 
 
-def load_data(file_path, col_names):
-    X = pd.read_csv(file_path, names=col_names)
-    return X
+
 
 
 def gen_model_input(df, x_cols, y_col, y_test_size):
