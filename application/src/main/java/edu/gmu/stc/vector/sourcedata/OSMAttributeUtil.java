@@ -14,7 +14,8 @@ public class OSMAttributeUtil {
     BUILDINGS_AREA("buildings_a"),
     TRAFFIC_AREA("traffic_a"),
     WATER_AREA("water_a"),
-    BLOCK_AREA("block_a");
+    BLOCK_AREA("block_a"),
+    ROADS("roads");
 
     private String layerName;
 
@@ -37,127 +38,108 @@ public class OSMAttributeUtil {
     }
   }
 
-  public static List<Attribute> getOSMLanduseAreaLayerAttribute() {
-    List<Attribute> attributes = new ArrayList<Attribute>();
-    Attribute osm_id = new Attribute(0, "osm_id", Long.class);
-    Attribute code = new Attribute(1, "code", Long.class);
-    Attribute fclass = new Attribute(2, "fclass", String.class);
-    Attribute name = new Attribute(3, "name", String.class);
-    Attribute temperature = new Attribute(4, "temp", Double.class);
-    Attribute ndvi = new Attribute(5, "ndvi", Double.class);
+  public static String[] extraAttributes = new String[]{"lst", "ndvi", "ndwi", "ndbi", "ndii", "mndwi", "ndisi"};
 
-    attributes.add(osm_id);
-    attributes.add(code);
-    attributes.add(fclass);
-    attributes.add(name);
-    attributes.add(temperature);
-    attributes.add(ndvi);
+  public static List<Attribute> getOSMLanduseAreaLayerAttribute() {
+    int i = 0;
+    List<Attribute> attributes = new ArrayList<Attribute>();
+    attributes.add(new Attribute(i++, "osm_id", Long.class));
+    attributes.add(new Attribute(i++, "code", Long.class));
+    attributes.add(new Attribute(i++, "fclass", String.class));
+    attributes.add(new Attribute(i++, "name", String.class));
+
+    for (String extraAttribute : extraAttributes) {
+      attributes.add(new Attribute(i++, extraAttribute, Double.class));
+    }
 
     return attributes;
   }
 
   public static List<Attribute> getOSMPOIsAreaLayerAttribute() {
+    int i = 0;
     List<Attribute> attributes = new ArrayList<Attribute>();
-    Attribute osm_id = new Attribute(0, "osm_id", Long.class);
-    Attribute code = new Attribute(1, "code", Long.class);
-    Attribute fclass = new Attribute(2, "fclass", String.class);
-    Attribute name = new Attribute(3, "name", String.class);
-    Attribute temperature = new Attribute(4, "temp", Double.class);
-    Attribute ndvi = new Attribute(5, "ndvi", Double.class);
 
-    attributes.add(osm_id);
-    attributes.add(code);
-    attributes.add(fclass);
-    attributes.add(name);
-    attributes.add(temperature);
-    attributes.add(ndvi);
+    attributes.add(new Attribute(i++, "osm_id", Long.class));
+    attributes.add(new Attribute(i++, "code", Long.class));
+    attributes.add(new Attribute(i++, "fclass", String.class));
+    attributes.add(new Attribute(i++, "name", String.class));
+
+    for (String extraAttribute : extraAttributes) {
+      attributes.add(new Attribute(i++, extraAttribute, Double.class));
+    }
 
     return attributes;
   }
 
   public static List<Attribute> getOSMBuildingsAreaLayerAttribute() {
+    int i = 0;
     List<Attribute> attributes = new ArrayList<Attribute>();
-    Attribute osm_id = new Attribute(0, "osm_id", Long.class);
-    Attribute code = new Attribute(1, "code", Long.class);
-    Attribute fclass = new Attribute(2, "fclass", String.class);
-    Attribute name = new Attribute(3, "name", String.class);
-    Attribute type = new Attribute(4, "type", String.class);
-    Attribute temperature = new Attribute(5, "temp", Double.class);
-    Attribute ndvi = new Attribute(6, "ndvi", Double.class);
 
-    attributes.add(osm_id);
-    attributes.add(code);
-    attributes.add(fclass);
-    attributes.add(name);
-    attributes.add(type);
-    attributes.add(temperature);
-    attributes.add(ndvi);
+    attributes.add(new Attribute(i++, "osm_id", Long.class));
+    attributes.add(new Attribute(i++, "code", Long.class));
+    attributes.add(new Attribute(i++, "fclass", String.class));
+    attributes.add(new Attribute(i++, "name", String.class));
+    attributes.add(new Attribute(i++, "type", String.class));
+
+    for (String extraAttribute : extraAttributes) {
+      attributes.add(new Attribute(i++, extraAttribute, Double.class));
+    }
+
     return attributes;
   }
 
   public static List<Attribute> getOSMTrafficAreaLayerAttribute() {
-    List<Attribute> attributes = new ArrayList<Attribute>();
-    Attribute osm_id = new Attribute(0, "osm_id", Long.class);
-    Attribute code = new Attribute(1, "code", Long.class);
-    Attribute fclass = new Attribute(2, "fclass", String.class);
-    Attribute name = new Attribute(3, "name", String.class);
-    Attribute temperature = new Attribute(4, "temp", Double.class);
-    Attribute ndvi = new Attribute(5, "ndvi", Double.class);
+    int i = 0;
 
-    attributes.add(osm_id);
-    attributes.add(code);
-    attributes.add(fclass);
-    attributes.add(name);
-    attributes.add(temperature);
-    attributes.add(ndvi);
+    List<Attribute> attributes = new ArrayList<Attribute>();
+    attributes.add(new Attribute(i++, "osm_id", Long.class));
+    attributes.add(new Attribute(i++, "code", Long.class));
+    attributes.add(new Attribute(i++, "fclass", String.class));
+    attributes.add(new Attribute(i++, "name", String.class));
+
+    for (String extraAttribute : extraAttributes) {
+      attributes.add(new Attribute(i++, extraAttribute, Double.class));
+    }
+
     return attributes;
   }
 
   public static List<Attribute> getOSMWaaterAreaLayerAttribute() {
-    List<Attribute> attributes = new ArrayList<Attribute>();
-    Attribute osm_id = new Attribute(0, "osm_id", Long.class);
-    Attribute code = new Attribute(1, "code", Long.class);
-    Attribute fclass = new Attribute(2, "fclass", String.class);
-    Attribute name = new Attribute(3, "name", String.class);
-    Attribute temperature = new Attribute(4, "temp", Double.class);
-    Attribute ndvi = new Attribute(5, "ndvi", Double.class);
+    int i = 0;
 
-    attributes.add(osm_id);
-    attributes.add(code);
-    attributes.add(fclass);
-    attributes.add(name);
-    attributes.add(temperature);
-    attributes.add(ndvi);
+    List<Attribute> attributes = new ArrayList<Attribute>();
+    attributes.add(new Attribute(i++, "osm_id", Long.class));
+    attributes.add(new Attribute(i++, "code", Long.class));
+    attributes.add(new Attribute(i++, "fclass", String.class));
+    attributes.add(new Attribute(i++, "name", String.class));
+
+    for (String extraAttribute : extraAttributes) {
+      attributes.add(new Attribute(i++, extraAttribute, Double.class));
+    }
+
     return attributes;
   }
 
   public static List<Attribute> getBlockAreaLayerAttribute() {
-    List<Attribute> attributes = new ArrayList<Attribute>();
-    Attribute STATEFP = new Attribute(0, "STATEFP", Integer.class);
-    Attribute COUNTYFP = new Attribute(1, "COUNTYFP", String.class);
-    Attribute TRACTCE = new Attribute(2, "TRACTCE", String.class);
-    Attribute BLKGRPCE = new Attribute(3, "BLKGRPCE", Integer.class);
-    Attribute AFFGEOID = new Attribute(4, "AFFGEOID", String.class);
-    Attribute GEOID = new Attribute(5, "GEOID", String.class);
-    Attribute NAME = new Attribute(6, "NAME", Integer.class);
-    Attribute LSAD = new Attribute(7, "LSAD", String.class);
-    Attribute ALAND = new Attribute(8, "ALAND", String.class);
-    Attribute AWATER = new Attribute(9, "AWATER", String.class);
-    Attribute temperature = new Attribute(10, "temp", Double.class);
-    Attribute ndvi = new Attribute(11, "ndvi", Double.class);
+    int i = 0;
 
-    attributes.add(STATEFP);
-    attributes.add(COUNTYFP);
-    attributes.add(TRACTCE);
-    attributes.add(BLKGRPCE);
-    attributes.add(AFFGEOID);
-    attributes.add(GEOID);
-    attributes.add(NAME);
-    attributes.add(LSAD);
-    attributes.add(ALAND);
-    attributes.add(AWATER);
-    attributes.add(temperature);
-    attributes.add(ndvi);
+    List<Attribute> attributes = new ArrayList<Attribute>();
+
+    attributes.add(new Attribute(i++, "STATEFP", Integer.class));
+    attributes.add(new Attribute(i++, "COUNTYFP", String.class));
+    attributes.add(new Attribute(i++, "TRACTCE", String.class));
+    attributes.add(new Attribute(i++, "BLKGRPCE", Integer.class));
+    attributes.add(new Attribute(i++, "AFFGEOID", String.class));
+    attributes.add(new Attribute(i++, "GEOID", String.class));
+    attributes.add(new Attribute(i++, "NAME", Integer.class));
+    attributes.add(new Attribute(i++, "LSAD", String.class));
+    attributes.add(new Attribute(i++, "ALAND", String.class));
+    attributes.add(new Attribute(i++, "AWATER", String.class));
+
+    for (String extraAttribute : extraAttributes) {
+      attributes.add(new Attribute(i++, extraAttribute, Double.class));
+    }
+
     return attributes;
   }
 

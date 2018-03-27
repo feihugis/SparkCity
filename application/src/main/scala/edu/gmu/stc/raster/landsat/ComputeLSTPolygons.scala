@@ -25,11 +25,11 @@ object ComputeLSTPolygons {
     val lst = {
       val tile = MultibandGeoTiff(maskedPath).tile.convert(DoubleConstantNoDataCellType)
       println(tile.getClass)
-      val (ndvi_min, ndvi_max) = tile.combineDouble(MaskBandsRandGandNIR.R_BAND, MaskBandsRandGandNIR.NIR_BAND, MaskBandsRandGandNIR.TIRS_BAND) { (r: Double, ir: Double, tirs: Double) =>
+      val (ndvi_min, ndvi_max) = tile.combineDouble(MaskBandsRandGandNIR.R_BAND, MaskBandsRandGandNIR.NIR_BAND, MaskBandsRandGandNIR.TIRS1_BAND) { (r: Double, ir: Double, tirs: Double) =>
         Calculations.ndvi(r, ir);
       }.findMinMaxDouble
 
-      tile.combineDouble(MaskBandsRandGandNIR.R_BAND, MaskBandsRandGandNIR.NIR_BAND, MaskBandsRandGandNIR.TIRS_BAND) { (r: Double, ir: Double, tirs: Double) =>
+      tile.combineDouble(MaskBandsRandGandNIR.R_BAND, MaskBandsRandGandNIR.NIR_BAND, MaskBandsRandGandNIR.TIRS1_BAND) { (r: Double, ir: Double, tirs: Double) =>
         Calculations.lst(r, ir, tirs, ndvi_min, ndvi_max)
       }
     }//.>(threshold)
@@ -104,12 +104,12 @@ object ComputeLSTPolygons {
       // Use the combineDouble method to map over the red and infrared values
       // and perform the NDVI calculation.
       println("Performing LST calculation...")
-      val (ndvi_min, ndvi_max) = tile.combineDouble(MaskBandsRandGandNIR.R_BAND, MaskBandsRandGandNIR.NIR_BAND, MaskBandsRandGandNIR.TIRS_BAND) { (r: Double, ir: Double, tirs: Double) =>
+      val (ndvi_min, ndvi_max) = tile.combineDouble(MaskBandsRandGandNIR.R_BAND, MaskBandsRandGandNIR.NIR_BAND, MaskBandsRandGandNIR.TIRS1_BAND) { (r: Double, ir: Double, tirs: Double) =>
         Calculations.ndvi(r, ir);
       }.findMinMaxDouble
 
 
-      tile.combineDouble(MaskBandsRandGandNIR.R_BAND, MaskBandsRandGandNIR.NIR_BAND, MaskBandsRandGandNIR.TIRS_BAND) { (r: Double, ir: Double, tirs: Double) =>
+      tile.combineDouble(MaskBandsRandGandNIR.R_BAND, MaskBandsRandGandNIR.NIR_BAND, MaskBandsRandGandNIR.TIRS1_BAND) { (r: Double, ir: Double, tirs: Double) =>
         Calculations.lst(r, ir, tirs, ndvi_min, ndvi_max);
       }
     }

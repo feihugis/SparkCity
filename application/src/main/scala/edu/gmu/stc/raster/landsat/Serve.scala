@@ -15,7 +15,7 @@ import akka.stream.{ActorMaterializer, Materializer}
 
 import scala.concurrent._
 import com.typesafe.config.ConfigFactory
-import MaskBandsRandGandNIR.{R_BAND, G_BAND, NIR_BAND, TIRS_BAND}
+import MaskBandsRandGandNIR.{R_BAND, G_BAND, NIR_BAND, TIRS1_BAND}
 
 object Serve extends App with Service {
   val catalogPath = new java.io.File("data/catalog").getAbsolutePath
@@ -91,7 +91,7 @@ trait Service {
 
                 val (ndvi_min, ndvi_max) = ndvi.findMinMaxDouble
                 val lst =
-                  tile.convert(DoubleConstantNoDataCellType).combineDouble(G_BAND, NIR_BAND, TIRS_BAND) { (g, ir, tirs) =>
+                  tile.convert(DoubleConstantNoDataCellType).combineDouble(G_BAND, NIR_BAND, TIRS1_BAND) { (g, ir, tirs) =>
                     Calculations.lst(g, ir, tirs, ndvi_min, ndvi_max)
                   }
 

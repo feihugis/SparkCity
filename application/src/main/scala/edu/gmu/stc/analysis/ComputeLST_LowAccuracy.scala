@@ -28,14 +28,14 @@ object ComputeLST_LowAccuracy extends Logging{
     val tile = geotiff.tile.convert(DoubleConstantNoDataCellType)
     val (ndvi_min, ndvi_max) = tile.combineDouble(MaskBandsRandGandNIR.R_BAND,
       MaskBandsRandGandNIR.NIR_BAND,
-      MaskBandsRandGandNIR.TIRS_BAND) {
+      MaskBandsRandGandNIR.TIRS1_BAND) {
       (r: Double, ir: Double, tirs: Double) => Calculations.ndvi(r, ir);
     }.findMinMaxDouble
 
 
     val lstTile = tile.combineDouble(MaskBandsRandGandNIR.R_BAND,
       MaskBandsRandGandNIR.NIR_BAND,
-      MaskBandsRandGandNIR.TIRS_BAND) {
+      MaskBandsRandGandNIR.TIRS1_BAND) {
       (r: Double, ir: Double, tirs: Double) => Calculations.lst(r, ir, tirs, ndvi_min, ndvi_max);
     }
 

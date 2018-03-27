@@ -25,13 +25,97 @@ import scala.collection.JavaConverters._
   */
 object ComputeLST_HighAccuracy extends Logging{
 
+  def computeIndex(hConf: Configuration,
+                   landsatMulBandFilePath: Path,
+                   indexNames: Array[String]): (Extent, Array[Tile]) = {
+    val geotiff = GeoTiffReaderHelper.readMultiband(landsatMulBandFilePath, hConf)
+    val tile = geotiff.tile.convert(DoubleConstantNoDataCellType)
+
+    val tiles = indexNames.map(indexName => {
+      indexName.toLowerCase match {
+        case "lst" => {
+          val ndviTile = tile.combineDouble(
+            MaskBandsRandGandNIR.R_BAND,
+            MaskBandsRandGandNIR.NIR_BAND) {
+            (r: Double, ir: Double) => Calculations.ndvi(r, ir)
+          }
+
+          val (ndvi_min, ndvi_max) = ndviTile.findMinMaxDouble
+
+          tile.combineDouble(
+            MaskBandsRandGandNIR.R_BAND,
+            MaskBandsRandGandNIR.NIR_BAND,
+            MaskBandsRandGandNIR.TIRS1_BAND) {
+            (r: Double, nir: Double, tirs1: Double) => Calculations.lst(r, nir, tirs1, ndvi_min, ndvi_max)
+          }
+        }
+
+        case "ndvi" => {
+          tile.combineDouble(
+            MaskBandsRandGandNIR.R_BAND,
+            MaskBandsRandGandNIR.NIR_BAND) {
+            (r: Double, ir: Double) => Calculations.ndvi(r, ir)
+          }
+        }
+
+        case "ndwi" => {
+          tile.combineDouble(
+            MaskBandsRandGandNIR.G_BAND,
+            MaskBandsRandGandNIR.NIR_BAND) {
+            (g: Double, nir: Double) => Calculations.ndwi(g, nir)
+          }
+        }
+
+        case "mndwi" => {
+          tile.combineDouble(
+            MaskBandsRandGandNIR.G_BAND,
+            MaskBandsRandGandNIR.SWIR1_BAND) {
+            (g: Double, swir1: Double) => Calculations.mndwi(g, swir1)
+          }
+        }
+
+        case "ndbi" => {
+          tile.combineDouble(
+            MaskBandsRandGandNIR.SWIR1_BAND,
+            MaskBandsRandGandNIR.NIR_BAND) {
+            (swir1: Double, nir: Double) => Calculations.ndbi(swir1, nir)
+          }
+        }
+
+        case "ndii" => {
+          tile.combineDouble(
+            MaskBandsRandGandNIR.R_BAND,
+            MaskBandsRandGandNIR.TIRS1_BAND) {
+            (r: Double, tirs1: Double) => Calculations.ndii(r, tirs1)
+          }
+        }
+
+        case "ndisi" => {
+          tile.combineDouble(
+            MaskBandsRandGandNIR.TIRS1_BAND,
+            MaskBandsRandGandNIR.G_BAND,
+            MaskBandsRandGandNIR.NIR_BAND,
+            MaskBandsRandGandNIR.SWIR1_BAND) {
+            (tirs1: Double, g: Double, nir: Double, swir1: Double) => Calculations.ndisi(tirs1, g, nir, swir1)
+          }
+        }
+
+        case default => {
+          throw new AssertionError("Do not support this index: " + default)
+        }
+      }
+    })
+
+    (geotiff.extent, tiles)
+  }
+
   def computeLSTAndNDVI(hConf: Configuration,
                         landsatMulBandFilePath: Path): (Extent, Tile, Tile) = {
     val geotiff = GeoTiffReaderHelper.readMultiband(landsatMulBandFilePath, hConf)
     val tile = geotiff.tile.convert(DoubleConstantNoDataCellType)
     val ndviTile = tile.combineDouble(MaskBandsRandGandNIR.R_BAND,
       MaskBandsRandGandNIR.NIR_BAND,
-      MaskBandsRandGandNIR.TIRS_BAND) {
+      MaskBandsRandGandNIR.TIRS1_BAND) {
       (r: Double, ir: Double, tirs: Double) => Calculations.ndvi(r, ir);
     }
 
@@ -40,7 +124,7 @@ object ComputeLST_HighAccuracy extends Logging{
 
     val lstTile = tile.combineDouble(MaskBandsRandGandNIR.R_BAND,
       MaskBandsRandGandNIR.NIR_BAND,
-      MaskBandsRandGandNIR.TIRS_BAND) {
+      MaskBandsRandGandNIR.TIRS1_BAND) {
       (r: Double, ir: Double, tirs: Double) => Calculations.lst(r, ir, tirs, ndvi_min, ndvi_max);
     }
 
@@ -92,12 +176,13 @@ object ComputeLST_HighAccuracy extends Logging{
   def extractLSTMeanValueFromTileByGeometry(hConfFile: String,
                                          rasterFile: String, rasterCRS: String,
                                          longitudeFirst: Boolean,
-                                         vectorIndexTableName: String, vectorCRS: String
+                                         vectorIndexTableName: String, vectorCRS: String,
+                                         indexNames: Array[String]
                                         ): List[Geometry] = {
     val hConf = new Configuration()
     hConf.addResource(new Path(hConfFile))
 
-    val (rasterExtent, lstTile, ndviTile) = computeLSTAndNDVI(hConf, new Path(rasterFile))
+    val (rasterExtent, indexTiles) = computeIndex(hConf, new Path(rasterFile), indexNames)
 
     val raster2osm_CRSTransform = VectorUtil.getCRSTransform(rasterCRS, vectorCRS, longitudeFirst)
     val osm2raster_CRSTransform = VectorUtil.getCRSTransform(vectorCRS, rasterCRS, longitudeFirst)
@@ -119,15 +204,15 @@ object ComputeLST_HighAccuracy extends Logging{
           hasAttribute = true)
       .map(geometry => JTS.transform(geometry, osm2raster_CRSTransform))
 
-    val polygonsWithLST = RasterOperation
-      .clipToPolygons(rasterExtent, Array(lstTile, ndviTile), polygons)
+    val polygonsWithIndices = RasterOperation
+      .clipToPolygons(rasterExtent, indexTiles, polygons)
       .filter(g => !g.getUserData.toString.contains("NaN"))
       .map(geometry => JTS.transform(geometry, raster2osm_CRSTransform))
 
-    logInfo("*********** Number of Polygons: " + polygonsWithLST.size)
+    logInfo("*********** Number of Polygons: " + polygonsWithIndices.size)
     logInfo("*********** Number of Input Polygons: " + polygons.size)
 
-    polygonsWithLST
+    polygonsWithIndices
   }
 
   case class ComputeLSTConfig(hConfFile: String,
@@ -141,13 +226,14 @@ object ComputeLST_HighAccuracy extends Logging{
 
   //TODO: optimize the input parameters. For example, support the input of tile which can be reused
   // by other OSM layers
-  def addLSTToOSMLayer(computeLSTConfig: ComputeLSTConfig): Unit = {
+  def addLSTToOSMLayer(computeLSTConfig: ComputeLSTConfig, indexNames: Array[String]): Unit = {
     val polygonsWithLST = extractLSTMeanValueFromTileByGeometry(computeLSTConfig.hConfFile,
       computeLSTConfig.rasterFile,
       computeLSTConfig.rasterCRS,
       computeLSTConfig.longitudeFirst,
       computeLSTConfig.vectorIndexTableName,
-      computeLSTConfig.vectorCRS)
+      computeLSTConfig.vectorCRS,
+      indexNames)
 
     val attributeSchema = OSMAttributeUtil.getLayerAtrributes(computeLSTConfig.osmLayerName)
 
@@ -167,8 +253,8 @@ object ComputeLST_HighAccuracy extends Logging{
   def main(args: Array[String]): Unit = {
 
     val buildingsConfig = ComputeLSTConfig(
-      hConfFile = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
-      rasterFile = "/Users/feihu/Documents/GitHub/SparkCity/data/r-g-nir.tif",
+      hConfFile = "config/conf_lst_va.xml",
+      rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
       longitudeFirst = true,
       vectorIndexTableName = "gis_osm_buildings_a_free_1",
@@ -178,8 +264,8 @@ object ComputeLST_HighAccuracy extends Logging{
     )
 
     val landuseConfig = ComputeLSTConfig(
-      hConfFile = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
-      rasterFile = "/Users/feihu/Documents/GitHub/SparkCity/data/r-g-nir.tif",
+      hConfFile = "config/conf_lst_va.xml",
+      rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
       longitudeFirst = true,
       vectorIndexTableName = "gis_osm_landuse_a_free_1",
@@ -189,8 +275,8 @@ object ComputeLST_HighAccuracy extends Logging{
     )
 
     val poisConfig = ComputeLSTConfig(
-      hConfFile = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
-      rasterFile = "/Users/feihu/Documents/GitHub/SparkCity/data/r-g-nir.tif",
+      hConfFile = "config/conf_lst_va.xml",
+      rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
       longitudeFirst = true,
       vectorIndexTableName = "gis_osm_pois_a_free_1",
@@ -200,8 +286,8 @@ object ComputeLST_HighAccuracy extends Logging{
     )
 
     val trafficConfig = ComputeLSTConfig(
-      hConfFile = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
-      rasterFile = "/Users/feihu/Documents/GitHub/SparkCity/data/r-g-nir.tif",
+      hConfFile = "config/conf_lst_va.xml",
+      rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
       longitudeFirst = true,
       vectorIndexTableName = "gis_osm_traffic_a_free_1",
@@ -211,8 +297,8 @@ object ComputeLST_HighAccuracy extends Logging{
     )
 
     val waterConfig = ComputeLSTConfig(
-      hConfFile = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
-      rasterFile = "/Users/feihu/Documents/GitHub/SparkCity/data/r-g-nir.tif",
+      hConfFile = "config/conf_lst_va.xml",
+      rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
       longitudeFirst = true,
       vectorIndexTableName = "gis_osm_water_a_free_1",
@@ -222,8 +308,8 @@ object ComputeLST_HighAccuracy extends Logging{
     )
 
     val blockConfig = ComputeLSTConfig(
-      hConfFile = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
-      rasterFile = "/Users/feihu/Documents/GitHub/SparkCity/data/r-g-nir.tif",
+      hConfFile = "config/conf_lst_va.xml",
+      rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
       longitudeFirst = true,
       vectorIndexTableName = "cb_2016_51_bg_500k",
@@ -232,9 +318,10 @@ object ComputeLST_HighAccuracy extends Logging{
       outputShpPath = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va_block/lst_va_block.shp"
     )
 
-    val configs = Array(/*buildingsConfig, landuseConfig, poisConfig, trafficConfig, waterConfig,*/ blockConfig)
+    val indexNames = Array("lst", "ndvi", "ndwi", "ndbi", "ndii", "mndwi", "ndisi")
+    val configs = Array(buildingsConfig, landuseConfig, poisConfig, trafficConfig, waterConfig, blockConfig)
     configs.foreach(config => {
-      addLSTToOSMLayer(config)
+      addLSTToOSMLayer(config, indexNames)
       logInfo("Finished the processing of " + config.vectorIndexTableName)
     })
   }
