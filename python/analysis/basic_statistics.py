@@ -1,6 +1,39 @@
 from analysis.csv_util import load_data
 import matplotlib.pyplot as plt
 
+import pandas as pd
+import numpy as np
+
+
+def describe_data(df, col_names):
+
+    # density plot
+    df.plot(kind='density', subplots=True, layout=(len(col_names), 1), sharex=False, figsize=(10, 10))
+    correlations = df.corr()
+    plt.show()
+
+    # plot correlation matrix
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(111)
+    cax = ax.matshow(correlations, vmin=-1, vmax=1)
+    fig.colorbar(cax)
+    ticks = np.arange(0, len(col_names), 1)
+    ax.set_xticks(ticks)
+    ax.set_yticks(ticks)
+    ax.set_xticklabels(col_names)
+    ax.set_yticklabels(col_names)
+    plt.show()
+
+    # Scatterplot Matrix
+    pd.scatter_matrix(df, figsize=(10, 10))
+    plt.show()
+
+
+def correlation_test(df, method='pearson'):
+    return df.corr(method = method)
+
+
+'''
 csvfile = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va_pois/lst_va_pois.csv"
 schema = ['osm_id', 'code', 'fclass', 'name', 'temp', 'ndvi', 'longitude', 'latitude', 'area']
 
@@ -35,7 +68,7 @@ fig = plt.figure(figsize=(17, 10))
 
 top_count.plot(kind='bar')
 
-
+'''
 
 
 

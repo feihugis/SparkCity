@@ -8,9 +8,12 @@ import pandas as pd
 from analysis.csv_util import load_data
 
 import numpy as np
+from sklearn.linear_model import Ridge
+
 import statsmodels.api as sm
 from scipy.stats import pearsonr
-
+from analysis.basic_statistics import describe_data, correlation_test
+from sklearn.model_selection import train_test_split as sklearn_train_test_split
 
 POLYGON_ID = "id"
 LST = "lst"
@@ -20,48 +23,14 @@ NDBI = "ndbi"
 NDII = "ndii"
 MNDWI = "mndwi"
 NDISI = "ndisi"
-
-
 CP = "CP"
 MNND = "MNND"
 PCI = "PCI"
 
-CSV_COLUMNS = [LST, NDVI, NDWI, NDBI, NDII, MNDWI, NDISI]
-FEATURE_COLUMNS = [NDVI, NDWI, NDBI, NDII, MNDWI, NDISI]
-
+CSV_COLUMNS = "osm_id	code	fclass	name	lst	ndvi	ndwi	ndbi	ndii	mndwi	ndisi	CP	MPS	MSI	MNND	PCI	TP	RP".split("\t")
+FEATURE_COLUMNS = "ndvi	ndwi	ndbi	ndii	mndwi	ndisi	CP	MPS	MSI	MNND	PCI	TP	RP".split("\t")
 LABEL_COLUMN = [LST]
-
-
-osm_layer = "pois"
-csvfile = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va_{}/lst_va_{}.csv".format(osm_layer,
-                                                                                        osm_layer)
-
-def describe_data(df, col_names):
-
-    # density plot
-    df.plot(kind='density', subplots=True, layout=(len(col_names), 1), sharex=False, figsize=(10, 10))
-    correlations = df.corr()
-    plt.show()
-
-    # plot correlation matrix
-    fig = plt.figure(figsize=(10, 10))
-    ax = fig.add_subplot(111)
-    cax = ax.matshow(correlations, vmin=-1, vmax=1)
-    fig.colorbar(cax)
-    ticks = np.arange(0, len(col_names), 1)
-    ax.set_xticks(ticks)
-    ax.set_yticks(ticks)
-    ax.set_xticklabels(col_names)
-    ax.set_yticklabels(col_names)
-    plt.show()
-
-    # Scatterplot Matrix
-    pd.scatter_matrix(df, figsize=(10, 10))
-    plt.show()
-
-
-def correlation_test(df, method='pearson'):
-    return df.corr(method = method)
+csvfile = "data/result/va/landuse/join_features.csv"
 
 
 def normalize(df):
@@ -72,18 +41,15 @@ def standardize(df):
     return (df - df.mean()) / df.std()
 
 
-def gen_model_input(df, x_cols, y_col, test_percent, isStandardize=False, isNormalize=False):
+def train_test_split(df, x_cols, y_col, test_percent, isStandardize=False, isNormalize=False):
     # print(df.head(5))
     df_X = df[x_cols]
     df_y = df[y_col]
 
-    test_size = int(len(df) * test_percent)
-
-    X_train = df_X[: -1 * test_size]
-    y_train = df_y[:-1 * test_size]
-
-    X_test = df_X[-1 * test_size:]
-    y_test = df_y[-1 * test_size:]
+    X_train, X_test, y_train, y_test = sklearn_train_test_split(df_X,
+                                                                df_y,
+                                                                test_size=test_percent,
+                                                                random_state=0)
 
     if isStandardize:
         X_train = standardize(X_train)
@@ -98,7 +64,58 @@ def gen_model_input(df, x_cols, y_col, test_percent, isStandardize=False, isNorm
     return X_train, y_train, X_test, y_test
 
 
+def lasso_regression(X_train, y_train, X_test, y_test, normalize=False):
+    print("-------------------------- Lasso Regression")
+    clf = linear_model.Lasso(alpha=0.01, max_iter=5000)
+    clf.fit(X_train, y_train)
+
+    # Make predictions using the testing set
+    y_pred = clf.predict(X_test)
+
+    # The intercept
+    print("Intercept: %.4f" % clf.intercept_)
+    # The mean squared error
+    print("Mean squared error: %.2f"
+          % mean_squared_error(y_test, y_pred))
+    # Explained variance score: 1 is perfect prediction
+    print('Coefficient of determination(R^2): %.2f' % r2_score(y_test, y_pred))
+    # The coefficients
+    cols = X_train.columns.tolist()
+    coef = clf.coef_.tolist()
+    coef = list(zip(cols, coef))
+    df_coef = pd.DataFrame.from_records(coef)
+    print('Coefficients: \n', df_coef)
+
+    return clf
+
+
+def ridge_regression(X_train, y_train, X_test, y_test, normalize=False):
+    print("-------------------------- Ridge Regression")
+    clf = Ridge(alpha=1.50, max_iter=5000)
+    clf.fit(X_train, y_train)
+
+    # Make predictions using the testing set
+    y_pred = clf.predict(X_test)
+
+    # The intercept
+    print("Intercept: %.4f" % clf.intercept_)
+    # The mean squared error
+    print("Mean squared error: %.2f"
+          % mean_squared_error(y_test, y_pred))
+    # Explained variance score: 1 is perfect prediction
+    print('Coefficient of determination(R^2): %.2f' % r2_score(y_test, y_pred))
+    # The coefficients
+    cols = X_train.columns.tolist()
+    coef = clf.coef_.tolist()[0]
+    coef = list(zip(cols, coef))
+    df_coef = pd.DataFrame.from_records(coef)
+    print('Coefficients: \n', df_coef)
+
+    return clf
+
+
 def linear_regression(X_train, y_train, X_test, y_test, normalize=False):
+    print("-------------------------- Linear Regression")
     # Create linear regression object
     regr = linear_model.LinearRegression(normalize=normalize)
 
@@ -108,8 +125,6 @@ def linear_regression(X_train, y_train, X_test, y_test, normalize=False):
     # Make predictions using the testing set
     y_pred = regr.predict(X_test)
 
-    # The coefficients
-    print('Coefficients: \n', regr.coef_)
     # The intercept
     print("Intercept: %.4f" % regr.intercept_)
     # The mean squared error
@@ -117,6 +132,15 @@ def linear_regression(X_train, y_train, X_test, y_test, normalize=False):
           % mean_squared_error(y_test, y_pred))
     # Explained variance score: 1 is perfect prediction
     print('Coefficient of determination(R^2): %.2f' % r2_score(y_test, y_pred))
+    # The coefficients
+    cols = X_train.columns.tolist()
+    coef = regr.coef_.tolist()[0]
+    coef = list(zip(cols, coef))
+    df_coef = pd.DataFrame.from_records(coef)
+    print('Coefficients: \n', df_coef)
+
+    return regr
+
 
     # Plot outputs
     # plt.scatter(X_test, y_test, color='black')
@@ -179,32 +203,31 @@ def stepwise_selection(X, y,
 
 
 def main(args=None):
-    df = load_data(csvfile, hasheader=True) #.sample(8000)
+    df = load_data(csvfile, hasheader=True)
+    df = df[(df["CP"] != 0) & (df["TP"] != 0)]
+    print(len(df))
 
     # describe_data(df[CSV_COLUMNS], CSV_COLUMNS)
 
     result = correlation_test(df[CSV_COLUMNS])
     print(result)
 
-    test_percent = 0.2
-    X_train, y_train, X_test, y_test = gen_model_input(df,
-                                                       FEATURE_COLUMNS,
-                                                       LABEL_COLUMN,
-                                                       test_percent,
-                                                       isNormalize=False,
-                                                       isStandardize=False)
-
-    #y_train = np.log(y_train)
-    #y_test = np.log(y_test)
-
-
+    test_percent = 0.3
+    X_train, y_train, X_test, y_test = train_test_split(df,
+                                                        FEATURE_COLUMNS,
+                                                        LABEL_COLUMN,
+                                                        test_percent,
+                                                        isNormalize=False,
+                                                        isStandardize=True)
 
     linear_regression(X_train, y_train, X_test, y_test, normalize=False)
+    ridge_regression(X_train, y_train, X_test, y_test, normalize=False)
+    lasso_regression(X_train, y_train, X_test, y_test, normalize=False)
 
     result = stepwise_selection(X_train, y_train,
                        initial_list=[],
                        threshold_in=0.01,
-                       threshold_out = 0.05,
+                       threshold_out=0.05,
                        verbose=True)
 
     print('resulting features:')
