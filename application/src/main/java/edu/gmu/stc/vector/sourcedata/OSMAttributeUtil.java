@@ -104,7 +104,7 @@ public class OSMAttributeUtil {
     return attributes;
   }
 
-  public static List<Attribute> getOSMWaaterAreaLayerAttribute() {
+  public static List<Attribute> getOSMWaterAreaLayerAttribute() {
     int i = 0;
 
     List<Attribute> attributes = new ArrayList<Attribute>();
@@ -112,6 +112,28 @@ public class OSMAttributeUtil {
     attributes.add(new Attribute(i++, "code", Long.class));
     attributes.add(new Attribute(i++, "fclass", String.class));
     attributes.add(new Attribute(i++, "name", String.class));
+
+    for (String extraAttribute : extraAttributes) {
+      attributes.add(new Attribute(i++, extraAttribute, Double.class));
+    }
+
+    return attributes;
+  }
+
+  public static List<Attribute> getRoadsLayerAttribute() {
+    int i = 0;
+
+    List<Attribute> attributes = new ArrayList<Attribute>();
+    attributes.add(new Attribute(i++, "osm_id", Long.class));
+    attributes.add(new Attribute(i++, "code", Long.class));
+    attributes.add(new Attribute(i++, "fclass", String.class));
+    attributes.add(new Attribute(i++, "name", String.class));
+    attributes.add(new Attribute(i++, "ref", String.class));
+    attributes.add(new Attribute(i++, "oneway", String.class));
+    attributes.add(new Attribute(i++, "maxspeed", Integer.class));
+    attributes.add(new Attribute(i++, "layer", Integer.class));
+    attributes.add(new Attribute(i++, "bridge", String.class));
+    attributes.add(new Attribute(i++, "tunnel", String.class));
 
     for (String extraAttribute : extraAttributes) {
       attributes.add(new Attribute(i++, extraAttribute, Double.class));
@@ -159,7 +181,7 @@ public class OSMAttributeUtil {
         return getOSMTrafficAreaLayerAttribute();
 
       case WATER_AREA:
-        return getOSMWaaterAreaLayerAttribute();
+        return getOSMWaterAreaLayerAttribute();
 
       case BLOCK_AREA:
         return getBlockAreaLayerAttribute();

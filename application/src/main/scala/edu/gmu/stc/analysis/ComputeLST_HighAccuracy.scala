@@ -132,7 +132,7 @@ object ComputeLST_HighAccuracy extends Logging{
     (geotiff.extent, lstTile, ndviTile)
   }
 
-  def extractLSTMeanValueFromTileByGeometry(hConfFile: String,
+  /*def extractLSTMeanValueFromTileByGeometry(hConfFile: String,
                                             lstTile: Tile,
                                             rasterExtent: Extent,
                                             rasterCRS: String,
@@ -171,21 +171,28 @@ object ComputeLST_HighAccuracy extends Logging{
     logInfo("*********** Number of Input Polygons: " + polygons.size)
 
     polygonsWithLST
-  }
+  }*/
 
   def extractLSTMeanValueFromTileByGeometry(hConfFile: String,
-                                         rasterFile: String, rasterCRS: String,
-                                         longitudeFirst: Boolean,
-                                         vectorIndexTableName: String, vectorCRS: String,
-                                         indexNames: Array[String]
-                                        ): List[Geometry] = {
+                                            rasterFile: String,
+                                            rasterCRS: String,
+                                            rasterLongitudeFirst: Boolean,
+                                            vectorIndexTableName: String,
+                                            vectorCRS: String,
+                                            vectorLongitudeFirst: Boolean,
+                                            indexNames: Array[String]
+                                           ): List[Geometry] = {
     val hConf = new Configuration()
     hConf.addResource(new Path(hConfFile))
 
     val (rasterExtent, indexTiles) = computeIndex(hConf, new Path(rasterFile), indexNames)
 
-    val raster2osm_CRSTransform = VectorUtil.getCRSTransform(rasterCRS, vectorCRS, longitudeFirst)
-    val osm2raster_CRSTransform = VectorUtil.getCRSTransform(vectorCRS, rasterCRS, longitudeFirst)
+    val raster2osm_CRSTransform = VectorUtil.getCRSTransform(
+      rasterCRS, rasterLongitudeFirst, vectorCRS, vectorLongitudeFirst
+    )
+    val osm2raster_CRSTransform = VectorUtil.getCRSTransform(
+      vectorCRS, rasterLongitudeFirst, rasterCRS, vectorLongitudeFirst
+    )
 
     val bbox = if (rasterCRS.equalsIgnoreCase(vectorCRS)) {
       new Envelope(rasterExtent.xmin, rasterExtent.xmax, rasterExtent.ymin, rasterExtent.ymax)
@@ -218,9 +225,10 @@ object ComputeLST_HighAccuracy extends Logging{
   case class ComputeLSTConfig(hConfFile: String,
                               rasterFile: String,
                               rasterCRS: String,
-                              longitudeFirst: Boolean,
+                              rasterLongitudeFirst: Boolean,
                               vectorIndexTableName: String,
                               vectorCRS: String,
+                              vectorLongitudeFirst: Boolean,
                               osmLayerName: String,
                               outputShpPath: String)
 
@@ -230,9 +238,10 @@ object ComputeLST_HighAccuracy extends Logging{
     val polygonsWithLST = extractLSTMeanValueFromTileByGeometry(computeLSTConfig.hConfFile,
       computeLSTConfig.rasterFile,
       computeLSTConfig.rasterCRS,
-      computeLSTConfig.longitudeFirst,
+      computeLSTConfig.rasterLongitudeFirst,
       computeLSTConfig.vectorIndexTableName,
       computeLSTConfig.vectorCRS,
+      computeLSTConfig.vectorLongitudeFirst,
       indexNames)
 
     val attributeSchema = OSMAttributeUtil.getLayerAtrributes(computeLSTConfig.osmLayerName)
@@ -256,9 +265,10 @@ object ComputeLST_HighAccuracy extends Logging{
       hConfFile = "config/conf_lst_va.xml",
       rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
-      longitudeFirst = true,
+      rasterLongitudeFirst = true,
       vectorIndexTableName = "gis_osm_buildings_a_free_1",
       vectorCRS = "epsg:4326",
+      vectorLongitudeFirst = true,
       osmLayerName = "buildings_a",
       outputShpPath = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va_buildings/lst_va_buildings.shp"
     )
@@ -267,9 +277,10 @@ object ComputeLST_HighAccuracy extends Logging{
       hConfFile = "config/conf_lst_va.xml",
       rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
-      longitudeFirst = true,
+      rasterLongitudeFirst = true,
       vectorIndexTableName = "gis_osm_landuse_a_free_1",
       vectorCRS = "epsg:4326",
+      vectorLongitudeFirst = true,
       osmLayerName = "landuse_a",
       outputShpPath = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va_landuse/lst_va_landuse.shp"
     )
@@ -278,9 +289,10 @@ object ComputeLST_HighAccuracy extends Logging{
       hConfFile = "config/conf_lst_va.xml",
       rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
-      longitudeFirst = true,
+      rasterLongitudeFirst = true,
       vectorIndexTableName = "gis_osm_pois_a_free_1",
       vectorCRS = "epsg:4326",
+      vectorLongitudeFirst = true,
       osmLayerName = "pois_a",
       outputShpPath = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va_pois/lst_va_pois.shp"
     )
@@ -289,9 +301,10 @@ object ComputeLST_HighAccuracy extends Logging{
       hConfFile = "config/conf_lst_va.xml",
       rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
-      longitudeFirst = true,
+      rasterLongitudeFirst = true,
       vectorIndexTableName = "gis_osm_traffic_a_free_1",
       vectorCRS = "epsg:4326",
+      vectorLongitudeFirst = true,
       osmLayerName = "traffic_a",
       outputShpPath = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va_traffic/lst_va_traffic.shp"
     )
@@ -300,9 +313,10 @@ object ComputeLST_HighAccuracy extends Logging{
       hConfFile = "config/conf_lst_va.xml",
       rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
-      longitudeFirst = true,
+      rasterLongitudeFirst = true,
       vectorIndexTableName = "gis_osm_water_a_free_1",
       vectorCRS = "epsg:4326",
+      vectorLongitudeFirst = true,
       osmLayerName = "water_a",
       outputShpPath = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va_water/lst_va_water.shp"
     )
@@ -311,9 +325,10 @@ object ComputeLST_HighAccuracy extends Logging{
       hConfFile = "config/conf_lst_va.xml",
       rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
-      longitudeFirst = true,
+      rasterLongitudeFirst = true,
       vectorIndexTableName = "cb_2016_51_bg_500k",
       vectorCRS = "epsg:4269",
+      vectorLongitudeFirst = true,
       osmLayerName = "block_a",
       outputShpPath = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va_block/lst_va_block.shp"
     )

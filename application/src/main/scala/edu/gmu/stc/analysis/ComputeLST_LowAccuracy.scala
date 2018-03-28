@@ -55,7 +55,7 @@ object ComputeLST_LowAccuracy extends Logging{
     val bbox = if (rasterCRS.equalsIgnoreCase(vectorCRS)) {
       new Envelope(rasterExtent.xmin, rasterExtent.xmax, rasterExtent.ymin, rasterExtent.ymax)
     } else {
-      val crsTransform = VectorUtil.getCRSTransform(rasterCRS, vectorCRS, longitudeFirst)
+      val crsTransform = VectorUtil.getCRSTransform(rasterCRS, longitudeFirst, vectorCRS, longitudeFirst)
       val envelope = new Envelope(rasterExtent.xmin, rasterExtent.xmax, rasterExtent.ymin, rasterExtent.ymax)
       JTS.transform(envelope, crsTransform)
     }
@@ -92,7 +92,7 @@ object ComputeLST_LowAccuracy extends Logging{
     val bbox = if (rasterCRS.equalsIgnoreCase(vectorCRS)) {
       new Envelope(rasterExtent.xmin, rasterExtent.xmax, rasterExtent.ymin, rasterExtent.ymax)
     } else {
-      val crsTransform = VectorUtil.getCRSTransform(rasterCRS, vectorCRS, longitudeFirst)
+      val crsTransform = VectorUtil.getCRSTransform(rasterCRS, longitudeFirst, vectorCRS, longitudeFirst)
       val envelope = new Envelope(rasterExtent.xmin, rasterExtent.xmax, rasterExtent.ymin, rasterExtent.ymax)
       JTS.transform(envelope, crsTransform)
     }

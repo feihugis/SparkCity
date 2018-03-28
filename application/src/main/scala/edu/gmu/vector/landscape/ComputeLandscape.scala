@@ -1,7 +1,9 @@
 package edu.gmu.vector.landscape
 
+import com.vividsolutions.jts.geom
 import com.vividsolutions.jts.geom.{Geometry, LineString, MultiPolygon, Polygon}
 import org.apache.spark.internal.Logging
+
 import scala.math._
 
 /**
@@ -28,12 +30,17 @@ object ComputeLandscape extends Logging{
         }
       }}
 
-    featureSum / geoCover.getArea
+    if (geoFeatureList.head.isInstanceOf[LineString]) {
+      featureSum / geoCover.getLength
+    } else {
+      featureSum / geoCover.getArea
+    }
+
   }
 
   def countFeatureNum(geoCover: Geometry, geoFeatureList: Iterable[Geometry]): Int = geoFeatureList.size
 
-  def computeMeanPathSize(geoCover: Geometry, geoFeatureList: Iterable[Geometry]): Double = {
+  def computeMeanPatchSize(geoCover: Geometry, geoFeatureList: Iterable[Geometry]): Double = {
     val areaSum = geoFeatureList.foldLeft[Double](0.0)((sum, geoFeature) => sum + geoFeature.getArea)
     areaSum / geoFeatureList.size
   }
@@ -50,19 +57,25 @@ object ComputeLandscape extends Logging{
 
   def computeMeanNearestNeighborDistance(geoCover: Geometry, geoFeatureList: Iterable[Geometry]): Double = {
     val features = geoFeatureList.toArray
-    val max_val = 1800000000.0
+    val max_val = 9999999.999
     val distances: Array[Double] = Array.fill[Double](features.length)(max_val)
 
-    for (i <- features.indices) {
-      for (j <- i + 1 until features.length) {
-        val dist = features(i).distance(features(j))
-        if (distances(i) > dist) distances(i) = dist
-        if (distances(j) > dist) distances(j) = dist
-      }
+    if (features.length == 0) {
+      Double.NaN
     }
-
-    //distances.filter(dist => dist != 1800000000.0)
-    distances.sum/distances.length
+    else if (features.length == 1) {
+      features.head.getCentroid.distance(geoCover)
+    }
+    else {
+      for (i <- features.indices) {
+        for (j <- i + 1 until features.length) {
+          val dist = features(i).distance(features(j))
+          if (distances(i) > dist) distances(i) = dist
+          if (distances(j) > dist) distances(j) = dist
+        }
+      }
+      distances.sum/distances.length
+    }
   }
 
   def computePatchCohesionIndex(geoCover: Geometry, geoFeatureList: Iterable[Geometry]): Double = {
@@ -79,5 +92,14 @@ object ComputeLandscape extends Logging{
     //println("perimeterSum: ", perimeterSum, " perimeterAreaSum: " + perimeterAreaSum)
 
     (1 - perimeterSum / perimeterAreaSum) / (1 - 1/sqrt(geoCover.getArea))
+  }
+
+  def computeRoadPercent(geoCover: Geometry, geoFeatureList: Iterable[Geometry]): Double = {
+    val featureSum = geoFeatureList.foldLeft[Double](0.0)
+      {case (sum, geoFeature) => {
+        sum + geoFeature.getLength
+      }}
+
+    featureSum / geoCover.getLength
   }
 }

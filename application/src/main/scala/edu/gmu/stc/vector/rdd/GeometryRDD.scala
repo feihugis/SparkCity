@@ -41,10 +41,13 @@ class GeometryRDD extends Logging{
     this.partitioner = shapeFileMetaRDD.getPartitioner
   }
 
-  def CRSTransfor(sourceEpsgCRSCode: String, targetEpsgCRSCode: String, lenient: Boolean = false): Unit = {
-    val sourceCRS = CRS.decode(sourceEpsgCRSCode)
-    val targetCRS = CRS.decode(targetEpsgCRSCode)
-    val transform = CRS.findMathTransform(sourceCRS, targetCRS, lenient)
+  def transforCRS(sourceEpsgCRSCode: String,
+                  sourceLongitudeFirst: Boolean = true,
+                  targetEpsgCRSCode: String,
+                  targetLongitudeFirst: Boolean = true): Unit = {
+    val sourceCRS = CRS.decode(sourceEpsgCRSCode, sourceLongitudeFirst)
+    val targetCRS = CRS.decode(targetEpsgCRSCode, targetLongitudeFirst)
+    val transform = CRS.findMathTransform(sourceCRS, targetCRS)
     this.geometryRDD = this.geometryRDD.map(geometry => JTS.transform(geometry, transform))
   }
 

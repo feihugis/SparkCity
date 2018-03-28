@@ -307,4 +307,28 @@ public class GeometryReaderUtil {
     bufferedWriter.close();
     fs.close();
   }
+
+  public static void saveRows2CSV(String header,
+                                  List<String> rows,
+                                  String csvFilePath)
+      throws IOException {
+    StringBuilder stringBuilder = new StringBuilder();
+    stringBuilder.append(header.replace("\t", ",") + "\n");
+    for (String row : rows) {
+      stringBuilder.append(row + "\n");
+    }
+
+    Configuration hConf = new Configuration();
+    FileSystem fs = FileSystem.get(hConf);
+    Path csvFile = new Path(csvFilePath);
+    if (fs.exists(csvFile)) {
+      fs.delete(csvFile, true);
+    }
+
+    OutputStream outputStream = fs.create(csvFile);
+    BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
+    bufferedWriter.write(stringBuilder.toString());
+    bufferedWriter.close();
+    fs.close();
+  }
 }
