@@ -82,7 +82,16 @@ class GeometryRDD extends Logging{
   }
 
   def spatialJoin(other: GeometryRDD): RDD[(Geometry, Iterable[Geometry])] = {
-    val pairedRDD= this.indexedGeometryRDD.zipPartitions(other.geometryRDD)(IndexOperator.geoSpatialJoin)
+    val pairedRDD= this.indexedGeometryRDD
+      .zipPartitions(other.geometryRDD)(IndexOperator.geoSpatialJoin)
+      .map{
+        case (g1, g2) => {
+          (g1.hashCode() + "" + g2.hashCode(), (g1, g2))
+        }
+      }.reduceByKey({
+      case (tuple1, tuple2) => tuple1
+    }).map(tuple => tuple._2)
+
     //TODO: is there any other efficient way
     pairedRDD.groupByKey()
   }
