@@ -261,16 +261,19 @@ object ComputeLST_HighAccuracy extends Logging{
 
   def main(args: Array[String]): Unit = {
 
+    val stateName = "md"
+    val stateID = "24"
+
     val buildingsConfig = ComputeLSTConfig(
       hConfFile = "config/conf_lst_va.xml",
       rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
       rasterLongitudeFirst = true,
-      vectorIndexTableName = "gis_osm_buildings_a_free_1",
+      vectorIndexTableName = s"${stateName}_osm_buildings_a_free_1",
       vectorCRS = "epsg:4326",
       vectorLongitudeFirst = true,
       osmLayerName = "buildings_a",
-      outputShpPath = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va_buildings/lst_va_buildings.shp"
+      outputShpPath = s"/Users/feihu/Documents/GitHub/SparkCity/data/${stateName}/lst/${stateName}_lst_buildings.shp"
     )
 
     val landuseConfig = ComputeLSTConfig(
@@ -278,11 +281,11 @@ object ComputeLST_HighAccuracy extends Logging{
       rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
       rasterLongitudeFirst = true,
-      vectorIndexTableName = "gis_osm_landuse_a_free_1",
+      vectorIndexTableName = s"${stateName}_osm_landuse_a_free_1",
       vectorCRS = "epsg:4326",
       vectorLongitudeFirst = true,
       osmLayerName = "landuse_a",
-      outputShpPath = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va_landuse/lst_va_landuse.shp"
+      outputShpPath = s"/Users/feihu/Documents/GitHub/SparkCity/data/${stateName}/lst/${stateName}_lst_landuse.shp"
     )
 
     val poisConfig = ComputeLSTConfig(
@@ -290,11 +293,11 @@ object ComputeLST_HighAccuracy extends Logging{
       rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
       rasterLongitudeFirst = true,
-      vectorIndexTableName = "gis_osm_pois_a_free_1",
+      vectorIndexTableName = s"${stateName}_osm_pois_a_free_1",
       vectorCRS = "epsg:4326",
       vectorLongitudeFirst = true,
       osmLayerName = "pois_a",
-      outputShpPath = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va_pois/lst_va_pois.shp"
+      outputShpPath = s"/Users/feihu/Documents/GitHub/SparkCity/data/${stateName}/lst/${stateName}_lst_pois.shp"
     )
 
     val trafficConfig = ComputeLSTConfig(
@@ -302,11 +305,11 @@ object ComputeLST_HighAccuracy extends Logging{
       rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
       rasterLongitudeFirst = true,
-      vectorIndexTableName = "gis_osm_traffic_a_free_1",
+      vectorIndexTableName = s"${stateName}_osm_traffic_a_free_1",
       vectorCRS = "epsg:4326",
       vectorLongitudeFirst = true,
       osmLayerName = "traffic_a",
-      outputShpPath = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va_traffic/lst_va_traffic.shp"
+      outputShpPath = s"/Users/feihu/Documents/GitHub/SparkCity/data/${stateName}/lst/${stateName}_lst_traffic.shp"
     )
 
     val waterConfig = ComputeLSTConfig(
@@ -314,11 +317,11 @@ object ComputeLST_HighAccuracy extends Logging{
       rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
       rasterLongitudeFirst = true,
-      vectorIndexTableName = "gis_osm_water_a_free_1",
+      vectorIndexTableName = s"${stateName}_osm_water_a_free_1",
       vectorCRS = "epsg:4326",
       vectorLongitudeFirst = true,
       osmLayerName = "water_a",
-      outputShpPath = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va_water/lst_va_water.shp"
+      outputShpPath = s"/Users/feihu/Documents/GitHub/SparkCity/data/${stateName}/lst/${stateName}_lst_water.shp"
     )
 
     val blockConfig = ComputeLSTConfig(
@@ -326,15 +329,15 @@ object ComputeLST_HighAccuracy extends Logging{
       rasterFile = "data/r-g-nir-tirs1-swir1.tif",
       rasterCRS = "epsg:32618",
       rasterLongitudeFirst = true,
-      vectorIndexTableName = "cb_2016_51_bg_500k",
+      vectorIndexTableName = s"${stateName}_cb_2016_${stateID}_bg_500k",
       vectorCRS = "epsg:4269",
       vectorLongitudeFirst = true,
       osmLayerName = "block_a",
-      outputShpPath = "/Users/feihu/Documents/GitHub/SparkCity/data/lst_va_block/lst_va_block.shp"
+      outputShpPath = s"/Users/feihu/Documents/GitHub/SparkCity/data/${stateName}/lst/${stateName}_lst_block.shp"
     )
 
     val indexNames = Array("lst", "ndvi", "ndwi", "ndbi", "ndii", "mndwi", "ndisi")
-    val configs = Array(buildingsConfig, landuseConfig, poisConfig, trafficConfig, waterConfig, blockConfig)
+    val configs = Array(landuseConfig, poisConfig, trafficConfig, waterConfig, blockConfig, buildingsConfig)
     configs.foreach(config => {
       addLSTToOSMLayer(config, indexNames)
       logInfo("Finished the processing of " + config.vectorIndexTableName)

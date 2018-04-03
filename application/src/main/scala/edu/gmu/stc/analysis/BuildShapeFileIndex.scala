@@ -5,6 +5,7 @@ import edu.gmu.stc.vector.serde.VectorKryoRegistrator
 import edu.gmu.stc.vector.sparkshell.STC_BuildIndexTest.logError
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
+import org.apache.hadoop.mapred.FileInputFormat
 import org.apache.spark.internal.Logging
 import org.apache.spark.{SparkConf, SparkContext}
 
@@ -13,8 +14,41 @@ import org.apache.spark.{SparkConf, SparkContext}
   */
 object BuildShapeFileIndex extends Logging{
 
-  def buildIndex(confPath: String): Unit = {
-    val sparkConf = new SparkConf().setAppName("BuildShapefileIndex")
+  def buildIndex(sc: SparkContext, hConf: Configuration): Unit = {
+    sc.hadoopConfiguration.addResource(hConf)
+
+    val shapeFileMetaRDD = new ShapeFileMetaRDD(sc, hConf)
+    shapeFileMetaRDD.initializeShapeFileMetaRDD(sc, hConf)
+    shapeFileMetaRDD.saveShapeFileMetaToDB()
+  }
+
+  def buildIndex_VA(sc: SparkContext): Unit = {
+    val confPath = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_build_index.xml"
+    val hConf = new Configuration()
+    hConf.addResource(new Path(confPath))
+    hConf.set("mapred.input.dir", "/Users/feihu/Documents/GitHub/SparkCity/data/va")
+    buildIndex(sc, hConf)
+  }
+
+  def buildIndex_DC(sc: SparkContext): Unit = {
+    val confPath = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_build_index.xml"
+    val hConf = new Configuration()
+    hConf.addResource(new Path(confPath))
+    hConf.set("mapred.input.dir", "/Users/feihu/Documents/GitHub/SparkCity/data/dc")
+    buildIndex(sc, hConf)
+  }
+
+  def buildIndex_MD(sc: SparkContext): Unit = {
+    val confPath = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_build_index.xml"
+    val hConf = new Configuration()
+    hConf.addResource(new Path(confPath))
+    hConf.set("mapred.input.dir", "/Users/feihu/Documents/GitHub/SparkCity/data/md")
+    buildIndex(sc, hConf)
+  }
+
+  def main(args: Array[String]): Unit = {
+    val sparkConf = new SparkConf()
+      .setAppName("BuildShapefileIndex")
       .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       .set("spark.kryo.registrator", classOf[VectorKryoRegistrator].getName)
 
@@ -23,18 +57,9 @@ object BuildShapeFileIndex extends Logging{
     }
 
     val sc = new SparkContext(sparkConf)
-    val hConf = new Configuration()
-    hConf.addResource(new Path(confPath))
-    sc.hadoopConfiguration.addResource(hConf)
-
-    val shapeFileMetaRDD = new ShapeFileMetaRDD(sc, hConf)
-    shapeFileMetaRDD.initializeShapeFileMetaRDD(sc, hConf)
-    shapeFileMetaRDD.saveShapeFileMetaToDB()
-  }
-
-  def main(args: Array[String]): Unit = {
-    val confPath = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_build_index.xml"
-    buildIndex(confPath)
+    //buildIndex_DC(sc)
+    //buildIndex_VA(sc)
+    buildIndex_MD(sc)
   }
 
 }

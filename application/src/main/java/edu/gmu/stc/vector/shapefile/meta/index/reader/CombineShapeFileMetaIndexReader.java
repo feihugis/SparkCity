@@ -84,7 +84,9 @@ public class CombineShapeFileMetaIndexReader extends RecordReader<ShapeKey, Shap
             else if(suffix.equals(DBF_SUFFIX)) dbfSplit = new FileSplit(paths[i], fileSplit.getOffset(i), fileSplit.getLength(i), fileSplit.getLocations());
         }
         // if shape file doesn't exists, throw an IOException
-        if(shpSplit == null) throw new IOException("Can't find .shp file.");
+        if(shpSplit == null) {
+          throw new IOException("Can't find .shp file.");
+        }
         else{
             if(shxSplit != null){
                 // shape file exists, extract .shp with .shx
@@ -103,7 +105,9 @@ public class CombineShapeFileMetaIndexReader extends RecordReader<ShapeKey, Shap
                 int[] indexes = new int[shxFileLength / 4];
                 buffer.get(indexes);
                 shapeFileMetaReader = new ShapeFileMetaReader(indexes);
-            }else shapeFileMetaReader = new ShapeFileMetaReader(); // no index, construct with no parameter
+            }else {
+              shapeFileMetaReader = new ShapeFileMetaReader(); // no index, construct with no parameter
+            }
             shapeFileMetaReader.initialize(shpSplit, context);
         }
         if(dbfSplit != null){

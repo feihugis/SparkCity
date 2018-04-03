@@ -8,6 +8,7 @@ import edu.gmu.stc.vector.parition.PartitionUtil
 import edu.gmu.stc.vector.rdd.index.IndexOperator
 import edu.gmu.stc.vector.shapefile.meta.ShapeFileMeta
 import edu.gmu.stc.vector.shapefile.meta.index.ShapeFileMetaIndexInputFormat
+import org.apache.commons.io.FilenameUtils
 import org.apache.spark.{Partition, SerializableWritable, SparkContext, TaskContext}
 import org.apache.spark.rdd.RDD
 import org.apache.hadoop.conf.Configuration
@@ -185,7 +186,8 @@ class ShapeFileMetaRDD (sc: SparkContext, @transient conf: Configuration) extend
     shapeFileMetaRDD.foreachPartition(itor => {
       val shapeFileMetaList = itor.toList
       //TODO: make sure the table name is right
-      val tableName = shapeFileMetaList.head.getFilePath.split("/").last.toLowerCase
+      //val tableName = shapeFileMetaList.head.getFilePath.split("/").last.toLowerCase
+      val tableName = FilenameUtils.getBaseName(shapeFileMetaList.head.getFilePath)
 
       logInfo("******* Save into the table [%s]".format(tableName))
 

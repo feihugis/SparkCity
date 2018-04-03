@@ -205,10 +205,16 @@ public class GeometryReaderUtil {
 
     FileSystem fs = FileSystem.get(fsURI, hConf);
     Path file = new Path(fsURI + filepath);
+    Path parentDir = file.getParent();
 
     if (fs.exists(file)) {
       fs.delete(file, true);
     }
+
+    if (!fs.exists(parentDir)) {
+      fs.mkdirs(parentDir);
+    }
+
 
     //OutputStream outputStream = fs.create(file);
 
