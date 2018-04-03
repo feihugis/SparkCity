@@ -14,7 +14,33 @@ def join_tables(df_left, df_right, how='left', on=["osm_id"]):
     return pd.merge(df_left, df_right, how=how, on=on)
 
 
-def main(args=None):
+def join_block_table():
+    statename = "md"
+    block_table = f"data/{statename}/result/{statename}_cb.csv"
+    block_table_columns = "STATEFP,COUNTYFP,TRACTCE,BLKGRPCE,AFFGEOID,GEOID,NAME,LSAD,ALAND,AWATER," \
+                          "lst,ndvi,ndwi,ndbi,ndii,mndwi,ndisi".split(",")
+
+    buildings_table = f"data/{statename}/result/{statename}_buildings.csv"
+    buildings_table_columns = "AFFGEOID,CP,MPS,MSI,MNND,PCI,FN".split(",")
+
+    parkings_table = f"data/{statename}/result/{statename}_parkings.csv"
+    parkings_table_columns = "AFFGEOID,TP".split(",")
+
+    roads_table = f"data/{statename}/result/{statename}_roads.csv"
+    roads_table_columns = "AFFGEOID,RP".split(",")
+
+    df_block = load_data(block_table, hasheader=True)[block_table_columns]
+    df_buildings = load_data(buildings_table, hasheader=True)[buildings_table_columns]
+    df_parkings = load_data(parkings_table, hasheader=True)[parkings_table_columns]
+    df_roads = load_data(roads_table, hasheader=True)[roads_table_columns]
+
+    for df_right in [df_buildings, df_parkings, df_roads]:
+        df_block = join_tables(df_block, df_right, how='left', on=["AFFGEOID"])
+
+    df_block.fillna(0).to_csv(f"data/{statename}/result/join_feature.csv", index=False)
+
+
+def join_landuse_table(args=None):
     landuse = "data/result/va/landuse/landuse.csv"
     landuse_cols = "osm_id	code	fclass	name	lst	ndvi	ndwi	ndbi	ndii	mndwi	" \
                    "ndisi".split("\t")
@@ -36,6 +62,6 @@ def main(args=None):
     df_landuse.fillna(0).to_csv("data/result/va/landuse/join_features.csv", index=False)
 
 
-
 if __name__ == '__main__':
-    main()
+    # main()
+    join_block_table()

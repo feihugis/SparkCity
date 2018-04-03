@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import datasets, linear_model
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 
 import pandas as pd
@@ -8,7 +9,7 @@ import pandas as pd
 from analysis.csv_util import load_data
 
 import numpy as np
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, RidgeCV
 
 import statsmodels.api as sm
 from scipy.stats import pearsonr
@@ -49,7 +50,7 @@ def train_test_split(df, x_cols, y_col, test_percent, isStandardize=False, isNor
     X_train, X_test, y_train, y_test = sklearn_train_test_split(df_X,
                                                                 df_y,
                                                                 test_size=test_percent,
-                                                                random_state=0)
+                                                                random_state=None)
 
     if isStandardize:
         X_train = standardize(X_train)
@@ -63,10 +64,32 @@ def train_test_split(df, x_cols, y_col, test_percent, isStandardize=False, isNor
 
     return X_train, y_train, X_test, y_test
 
+def randomforest_regression(X_train, y_train, X_test, y_test, max_depth=6):
+    print("-------------------------- RandomForest Regression")
+    clf = RandomForestRegressor(max_depth=max_depth, random_state=0)
+    clf.fit(X_train, y_train)
+
+    y_pred = clf.predict(X_test)
+
+    # The mean squared error
+    print("Mean squared error: %.2f"
+          % mean_squared_error(y_test, y_pred))
+    # Explained variance score: 1 is perfect prediction
+    print('Coefficient of determination(R^2): %.2f' % r2_score(y_test, y_pred))
+    # The coefficients
+    cols = X_train.columns.tolist()
+    coef = clf.feature_importances_
+    coef = list(zip(cols, coef))
+    df_coef = pd.DataFrame.from_records(coef)
+    print('Coefficients: \n', df_coef)
+    return clf
+
+
+
 
 def lasso_regression(X_train, y_train, X_test, y_test, normalize=False):
     print("-------------------------- Lasso Regression")
-    clf = linear_model.Lasso(alpha=0.01, max_iter=5000)
+    clf = linear_model.LassoCV(alphas=np.arange(0.1, 2, 0.1), max_iter=5000)
     clf.fit(X_train, y_train)
 
     # Make predictions using the testing set
@@ -85,13 +108,15 @@ def lasso_regression(X_train, y_train, X_test, y_test, normalize=False):
     coef = list(zip(cols, coef))
     df_coef = pd.DataFrame.from_records(coef)
     print('Coefficients: \n', df_coef)
+    print('Alpha: \n', clf.alpha_)
 
     return clf
 
 
 def ridge_regression(X_train, y_train, X_test, y_test, normalize=False):
     print("-------------------------- Ridge Regression")
-    clf = Ridge(alpha=1.50, max_iter=5000)
+    #clf = Ridge(alpha=1.50, max_iter=5000)
+    clf = RidgeCV(alphas=np.arange(0.1, 2, 0.1))
     clf.fit(X_train, y_train)
 
     # Make predictions using the testing set
@@ -110,6 +135,7 @@ def ridge_regression(X_train, y_train, X_test, y_test, normalize=False):
     coef = list(zip(cols, coef))
     df_coef = pd.DataFrame.from_records(coef)
     print('Coefficients: \n', df_coef)
+    print('Alpha: \n', clf.alpha_)
 
     return clf
 
@@ -221,8 +247,10 @@ def main(args=None):
                                                         isStandardize=True)
 
     linear_regression(X_train, y_train, X_test, y_test, normalize=False)
-    ridge_regression(X_train, y_train, X_test, y_test, normalize=False)
     lasso_regression(X_train, y_train, X_test, y_test, normalize=False)
+    ridge_regression(X_train, y_train, X_test, y_test, normalize=False)
+    randomforest_regression(X_train, y_train, X_test, y_test)
+
 
     result = stepwise_selection(X_train, y_train,
                        initial_list=[],
