@@ -186,6 +186,9 @@ public class OSMAttributeUtil {
       case BLOCK_AREA:
         return getBlockAreaLayerAttribute();
 
+      case ROADS:
+        return getRoadsLayerAttribute();
+
       default:
         throw new AssertionError("Unknown OSMLayer: " + layerName);
     }

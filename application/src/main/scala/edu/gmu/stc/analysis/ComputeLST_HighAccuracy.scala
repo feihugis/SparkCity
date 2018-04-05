@@ -261,8 +261,12 @@ object ComputeLST_HighAccuracy extends Logging{
 
   def main(args: Array[String]): Unit = {
 
-    val stateName = "md"
-    val stateID = "24"
+    // va 51
+    // md 24
+    // dc 11
+
+    val stateName = "va"
+    val stateID = "51"
 
     val buildingsConfig = ComputeLSTConfig(
       hConfFile = "config/conf_lst_va.xml",
@@ -337,7 +341,7 @@ object ComputeLST_HighAccuracy extends Logging{
     )
 
     val indexNames = Array("lst", "ndvi", "ndwi", "ndbi", "ndii", "mndwi", "ndisi")
-    val configs = Array(landuseConfig, poisConfig, trafficConfig, waterConfig, blockConfig, buildingsConfig)
+    val configs = Array(/*landuseConfig, poisConfig, trafficConfig, waterConfig,*/ blockConfig/*, buildingsConfig*/)
     configs.foreach(config => {
       addLSTToOSMLayer(config, indexNames)
       logInfo("Finished the processing of " + config.vectorIndexTableName)

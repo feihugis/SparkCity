@@ -58,8 +58,8 @@ object BuildShapeFileIndex extends Logging{
 
     val sc = new SparkContext(sparkConf)
     //buildIndex_DC(sc)
-    //buildIndex_VA(sc)
-    buildIndex_MD(sc)
+    buildIndex_VA(sc)
+    //buildIndex_MD(sc)
   }
 
 }

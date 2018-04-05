@@ -158,7 +158,6 @@ object SpatialJoin {
 
     val sc = new SparkContext(sparkConf)
 
-
     val va_bbox = (-77.622, -76.995, 38.658, 39.105)
     val va_statename = "va"
     val va_stateID = 51
@@ -171,8 +170,8 @@ object SpatialJoin {
     val md_statename = "md"
     val md_stateID = 24
 
-    val stateName = md_statename
-    val stateID = md_stateID
+    val stateName = va_statename
+    val stateID = va_stateID
     val baseIndexTable = s"${stateName}_lst_block"
     val crs1 = "epsg:4269"
     val crs2 = "epsg:4326"
@@ -197,8 +196,6 @@ object SpatialJoin {
       outputFilePath = s"data/${stateName}/result/${stateName}_cb.csv"
     )
 
-    spatialJoin(sc, spatialJoinConfig_0)
-
     val spatialJoinConfig_1 = SpatialJoinConfig(
       confFilePath = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
       envelope = bbox,
@@ -215,8 +212,6 @@ object SpatialJoin {
       rawAttributes = OSMAttributeUtil.getLayerAtrributes("block_a").asScala.toArray,
       outputFilePath = s"data/${stateName}/result/${stateName}_buildings.csv"
     )
-
-    spatialJoin(sc, spatialJoinConfig_1)
 
     val spatialJoinConfig_2 = SpatialJoinConfig(
       confFilePath = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
@@ -235,8 +230,6 @@ object SpatialJoin {
       outputFilePath = s"data/${stateName}/result/${stateName}_roads.csv"
     )
 
-    spatialJoin(sc, spatialJoinConfig_2)
-
     val spatialJoinConfig_3 = SpatialJoinConfig(
       confFilePath = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
       envelope = bbox,
@@ -254,7 +247,28 @@ object SpatialJoin {
       outputFilePath = s"data/${stateName}/result/${stateName}_parkings.csv"
     )
 
+    val spatialJoinConfig_4 = SpatialJoinConfig(
+      confFilePath = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
+      envelope = bbox,
+      gridType = "KDBTREE",
+      indexType = "RTREE",
+      partitionNum = 36,
+      indexTable1 = baseIndexTable,
+      crs1 = crs1,
+      longitudeFirst1 = true,
+      indexTable2 = s"${stateName}_lst_water",
+      crs2 = crs2,
+      longitudeFirst2 = true,
+      indexArray = Array("CP"),
+      rawAttributes = OSMAttributeUtil.getLayerAtrributes("block_a").asScala.toArray,
+      outputFilePath = s"data/${stateName}/result/${stateName}_water.csv"
+    )
+
+    spatialJoin(sc, spatialJoinConfig_0)
+    spatialJoin(sc, spatialJoinConfig_1)
+    spatialJoin(sc, spatialJoinConfig_2)
     spatialJoin(sc, spatialJoinConfig_3)
+    spatialJoin(sc, spatialJoinConfig_4)
   }
 
 }
