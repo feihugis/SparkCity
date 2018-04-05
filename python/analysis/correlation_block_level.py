@@ -35,11 +35,12 @@ def regression_analysis(csv_file, feature_columns, target_column, test_percent =
 
 
 def main():
-    statename = "va"
+    statename = "dc"
     csv_file = f"data/{statename}/result/join_feature.csv"
-    feature_columns = "ndvi,ndwi,ndbi,ndii,mndwi,ndisi,CP,MPS,MSI,MNND,PCI,FN,TP,RP".split(",")
-    feature_columns = "CP,MPS,MSI,MNND,PCI,TP,RP".split(",")
-    feature_columns = "CP,MPS,MSI,MNND,PCI,TP,RP".split(",")
+    # CP_x : building percentage
+    # CP_y : water percentage
+    feature_columns = "ndvi,ndwi,ndbi,ndii,mndwi,ndisi,CP_x,CP_y,MPS,MSI,MNND,PCI,FN,TP,RP,population,income".split(",")
+    feature_columns = "CP_x,CP_y,MPS,MSI,MNND,PCI,FN,TP,RP,population,income".split(",")
     target_column = ["lst"]
     test_percent = 0.3
     regression_analysis(csv_file, feature_columns, target_column, test_percent)

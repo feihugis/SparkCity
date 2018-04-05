@@ -14,11 +14,14 @@ def join_tables(df_left, df_right, how='left', on=["osm_id"]):
     return pd.merge(df_left, df_right, how=how, on=on)
 
 
-def join_block_table():
-    statename = "md"
-    block_table = f"data/{statename}/result/{statename}_cb.csv"
-    block_table_columns = "STATEFP,COUNTYFP,TRACTCE,BLKGRPCE,AFFGEOID,GEOID,NAME,LSAD,ALAND,AWATER," \
-                          "lst,ndvi,ndwi,ndbi,ndii,mndwi,ndisi".split(",")
+def join_block_table(statename="va"):
+
+    block_table_base = f"data/{statename}/result/{statename}_cb.csv"
+    block_table_base_col = "STATEFP,COUNTYFP,TRACTCE,BLKGRPCE,AFFGEOID,GEOID,NAME,LSAD,ALAND,AWATER," \
+                           "lst,ndvi,ndwi,ndbi,ndii,mndwi,ndisi".split(",")
+
+    block_table = f"data/{statename}/lst/{statename}_lst_block.csv"
+    block_table_columns = "AFFGEOID,area".split(",")
 
     buildings_table = f"data/{statename}/result/{statename}_buildings.csv"
     buildings_table_columns = "AFFGEOID,CP,MPS,MSI,MNND,PCI,FN".split(",")
@@ -29,15 +32,41 @@ def join_block_table():
     roads_table = f"data/{statename}/result/{statename}_roads.csv"
     roads_table_columns = "AFFGEOID,RP".split(",")
 
+    water_table = f"data/{statename}/result/{statename}_water.csv"
+    water_table_columns = "AFFGEOID,CP".split(",")
+
+    race_table = f"data/{statename}/social/{statename}_race.csv"
+    race_table_columns = "GEOID,B02001e1".split(",")
+
+    income_table = f"data/{statename}/social/{statename}_income.csv"
+    income_table_columns = "GEOID,B19001e1".split(",")
+
+
+    df_block_base = load_data(block_table_base, hasheader=True)[block_table_base_col]
     df_block = load_data(block_table, hasheader=True)[block_table_columns]
     df_buildings = load_data(buildings_table, hasheader=True)[buildings_table_columns]
     df_parkings = load_data(parkings_table, hasheader=True)[parkings_table_columns]
     df_roads = load_data(roads_table, hasheader=True)[roads_table_columns]
+    df_water = load_data(water_table, hasheader=True)[water_table_columns]
 
-    for df_right in [df_buildings, df_parkings, df_roads]:
-        df_block = join_tables(df_block, df_right, how='left', on=["AFFGEOID"])
+    df_race = load_data(race_table, hasheader=True)[race_table_columns]
+    df_race.columns = ['AFFGEOID', 'population']
+    df_race['AFFGEOID'] = df_race['AFFGEOID'].apply(lambda id: id.replace("15000", "1500000"))
 
-    df_block.fillna(0).to_csv(f"data/{statename}/result/join_feature.csv", index=False)
+    df_income = load_data(income_table, hasheader=True)[income_table_columns]
+    df_income.columns = ['AFFGEOID', 'income']
+    df_income['AFFGEOID'] = df_income['AFFGEOID'].apply(lambda id: id.replace("15000", "1500000"))
+
+    # B19001e1 : house hold income
+    # B02001e1: total population
+
+
+    for df_right in [df_block, df_buildings, df_parkings, df_roads, df_water, df_race, df_income]:
+        df_block_base = join_tables(df_block_base, df_right, how='left', on=["AFFGEOID"])
+
+    df_block_base["population"] = df_block_base["population"] / df_block_base["area"]
+
+    df_block_base.fillna(0).to_csv(f"data/{statename}/result/join_feature.csv", index=False)
 
 
 def join_landuse_table(args=None):
@@ -64,4 +93,6 @@ def join_landuse_table(args=None):
 
 if __name__ == '__main__':
     # main()
-    join_block_table()
+    join_block_table(statename="md")
+    join_block_table(statename="va")
+    join_block_table(statename="dc")

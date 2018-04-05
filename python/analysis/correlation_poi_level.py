@@ -1,9 +1,10 @@
 
 from analysis.linear_regression import load_data, correlation_test, train_test_split, linear_regression, ridge_regression, lasso_regression, stepwise_selection, describe_data, randomforest_regression
-
+from analysis.basic_statistics import filter_by_area
 
 def regression_analysis(csv_file, feature_columns, target_column, fclass="", test_percent=0.3):
     df = load_data(csv_file, hasheader=True)
+    df = filter_by_area(df)
 
     if len(fclass) > 0:
         df = df[(df["fclass"] == fclass)]
@@ -39,7 +40,7 @@ def regression_analysis(csv_file, feature_columns, target_column, fclass="", tes
 def main():
     statename = "va"
     csv_file = f"data/{statename}/lst/{statename}_lst_pois.csv"
-    feature_columns = "ndvi,ndwi,ndbi,ndii,mndwi,ndisi".split(",")
+    feature_columns = "ndvi,ndwi,ndbi,ndii,ndisi".split(",")
     target_column = ["lst"]
     test_percent = 0.3
     regression_analysis(csv_file, feature_columns, target_column, "", test_percent)

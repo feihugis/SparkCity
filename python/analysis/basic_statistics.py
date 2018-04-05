@@ -40,11 +40,12 @@ def top_poi(statename, key='lst'):
     schema = "osm_id,code,fclass,name,lst,ndvi,ndwi,ndbi,ndii,mndwi,ndisi,longitude,latitude,area".split(",")
 
     df_raw = load_data(csvfile, hasheader=True)
+    df_raw = filter_by_area(df_raw)
     # va (-77.622, -76.995, 38.658, 39.105)
-    df_raw = df_raw[(df_raw['longitude'] > -77.622)
-                    & (df_raw['longitude'] < -76.995)
-                    & (df_raw['latitude'] > 38.658)
-                    & (df_raw['latitude'] < 39.105)]
+    # df_raw = df_raw[(df_raw['longitude'] > -77.622)
+    #                 & (df_raw['longitude'] < -76.995)
+    #                 & (df_raw['latitude'] > 38.658)
+    #                 & (df_raw['latitude'] < 39.105)]
 
     df_sort = df_raw.sort_values(by=[key], ascending=False)
 
@@ -83,13 +84,20 @@ def top_poi(statename, key='lst'):
     fig.show()
     fig.savefig(f"data/{statename}/result/poi/Bottom_count_{percent}.png")
 
+def filter_by_area(df):
+    df = df[(df["area"]*111000*111000 >= 900)]
+    return df
 
 def descriptive_statistics(statename, layer, label_fontsize=10, title_fontsize=20):
     csvfile = f"data/{statename}/lst/{statename}_lst_{layer.lower()}.csv"
     schema = "fclass,lst".split(",")
 
     df = load_data(csvfile, hasheader=True)
-    print(df.groupby("fclass")["lst"].describe())
+    print(len(df))
+    df = filter_by_area(df)
+    print("---------------------")
+    print(len(df))
+    #print(df.groupby("fclass")["lst"].describe())
     sorted_fclass = df.groupby("fclass")["lst"].median().sort_values(ascending=False).index
 
     plot = df\
@@ -111,14 +119,14 @@ def descriptive_statistics(statename, layer, label_fontsize=10, title_fontsize=2
 
 
 if __name__ == '__main__':
-    #top_poi("va")
+    # top_poi("va")
     descriptive_statistics(statename="va", layer="POIs", label_fontsize=10, title_fontsize=20)
-    descriptive_statistics(statename="dc", layer="POIs", label_fontsize=10, title_fontsize=20)
-    descriptive_statistics(statename="md", layer="POIs", label_fontsize=10, title_fontsize=20)
-
-    descriptive_statistics(statename="va", layer="Landuse", label_fontsize=15, title_fontsize=20)
-    descriptive_statistics(statename="dc", layer="Landuse", label_fontsize=15, title_fontsize=20)
-    descriptive_statistics(statename="md", layer="Landuse", label_fontsize=15, title_fontsize=20)
+    # descriptive_statistics(statename="dc", layer="POIs", label_fontsize=10, title_fontsize=20)
+    # descriptive_statistics(statename="md", layer="POIs", label_fontsize=10, title_fontsize=20)
+    #
+    # descriptive_statistics(statename="va", layer="Landuse", label_fontsize=15, title_fontsize=20)
+    # descriptive_statistics(statename="dc", layer="Landuse", label_fontsize=15, title_fontsize=20)
+    # descriptive_statistics(statename="md", layer="Landuse", label_fontsize=15, title_fontsize=20)
 
 
 

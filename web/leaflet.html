@@ -1,10 +1,211 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>$Title$</title>
+
+    <title>Layers Control Tutorial - Leaflet</title>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"></script>
+
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+
+
 </head>
 <body>
-$END$
+
+<div id='map'></div>
+
+<script>
+    var cities = L.layerGroup();
+
+    var dc_lst = {
+        block: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?',
+                               {
+                                   layers: 'LST:dc_lst_block',
+                                   transparency: 'true',
+                                   format: 'image/png',
+                                   opacity: 0.5
+        }),
+        pois: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?', {
+            layers: 'LST:dc_lst_pois',
+            transparency: 'true',
+            format: 'image/png',
+            opacity: 0.5
+        }),
+        buildings: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?',
+                               {
+                                   layers: 'LST:dc_lst_buildings',
+                                   transparency: 'true',
+                                   format: 'image/png',
+                                   opacity: 0.5
+                               }),
+        landuse: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?', {
+            layers: 'LST:dc_lst_landuse',
+            transparency: 'true',
+            format: 'image/png',
+            opacity: 0.5
+        }),
+        parking: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?', {
+            layers: 'LST:dc_lst_traffic',
+            transparency: 'true',
+            format: 'image/png',
+            opacity: 0.5
+        }),
+        water: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?', {
+            layers: 'LST:dc_lst_water',
+            transparency: 'true',
+            format: 'image/png',
+            opacity: 0.5
+        })
+
+    }
+
+    var va_lst = {
+        block: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?',
+                               {
+                                   layers: 'LST:va_lst_block',
+                                   transparency: 'true',
+                                   format: 'image/png',
+                                   opacity: 0.5
+                               }),
+        pois: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?', {
+            layers: 'LST:va_lst_pois',
+            transparency: 'true',
+            format: 'image/png',
+            opacity: 0.5
+        }),
+        buildings: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?',
+                                   {
+                                       layers: 'LST:va_lst_buildings',
+                                       transparency: 'true',
+                                       format: 'image/png',
+                                       opacity: 0.5
+                                   }),
+        landuse: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?', {
+            layers: 'LST:va_lst_landuse',
+            transparency: 'true',
+            format: 'image/png',
+            opacity: 0.5
+        }),
+        parking: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?', {
+            layers: 'LST:va_lst_traffic',
+            transparency: 'true',
+            format: 'image/png',
+            opacity: 0.5
+        }),
+        water: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?', {
+            layers: 'LST:va_lst_water',
+            transparency: 'true',
+            format: 'image/png',
+            opacity: 0.5
+        })
+    }
+
+    var md_lst = {
+        block: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?',
+                               {
+                                   layers: 'LST:md_lst_block',
+                                   transparency: 'true',
+                                   format: 'image/png',
+                                   opacity: 0.5
+                               }),
+        pois: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?', {
+            layers: 'LST:md_lst_pois',
+            transparency: 'true',
+            format: 'image/png',
+            opacity: 0.5
+        }),
+        buildings: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?',
+                                   {
+                                       layers: 'LST:md_lst_buildings',
+                                       transparency: 'true',
+                                       format: 'image/png',
+                                       opacity: 0.5
+                                   }),
+        landuse: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?', {
+            layers: 'LST:md_lst_landuse',
+            transparency: 'true',
+            format: 'image/png',
+            opacity: 0.5
+        }),
+        parking: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?', {
+            layers: 'LST:md_lst_traffic',
+            transparency: 'true',
+            format: 'image/png',
+            opacity: 0.5
+        }),
+        water: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?', {
+            layers: 'LST:md_lst_water',
+            transparency: 'true',
+            format: 'image/png',
+            opacity: 0.5
+        })
+    }
+
+
+    var mbAttr = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+                 '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+                 'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+        mbUrl = 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+
+    var grayscale   = L.tileLayer(mbUrl, {id: 'mapbox.light', attribution: mbAttr}),
+        streets  = L.tileLayer(mbUrl, {id: 'mapbox.streets',   attribution: mbAttr});
+
+    var map = L.map('map', {
+        center: [38.79164499999541, -77.11975900000722,],
+        zoom: 10,
+        layers: [streets, dc_lst.block, va_lst.block, md_lst.block]
+    });
+
+    var baseLayers = {
+        "Streets": streets,
+        "Grayscale": grayscale
+    };
+
+    var overlays = {
+        "DC_Block": dc_lst.block,
+        "DC_POI": dc_lst.pois,
+        "DC_Building": dc_lst.buildings,
+        "DC_Parking": dc_lst.parking,
+        "DC_Landuse": dc_lst.landuse,
+        "DC_Water": dc_lst.water,
+        "VA_Block": va_lst.block,
+        "VA_POI": va_lst.pois,
+        "VA_Building": va_lst.buildings,
+        "VA_Parking": va_lst.parking,
+        "VA_Landuse": va_lst.landuse,
+        "VA_Water": va_lst.water,
+        "MD_Block": md_lst.block,
+        "MD_POI": md_lst.pois,
+        "MD_Building": md_lst.buildings,
+        "MD_Parking": md_lst.parking,
+        "MD_Landuse": md_lst.landuse,
+        "MD_Water": md_lst.water
+    };
+
+
+    //http://localhost:8080/geoserver/LST/wms?service=WMS&version=1.1.0&request=GetMap&layers=LST:dc_lst_block&styles=&bbox=-77.11975900000722,38.79164499999541,-76.90939500000415,38.99510999999534&width=768&height=742&srs=EPSG:4269&format=application/openlayers
+
+    L.control.layers(baseLayers, overlays).addTo(map);
+</script>
+
+
+
 </body>
 </html>
