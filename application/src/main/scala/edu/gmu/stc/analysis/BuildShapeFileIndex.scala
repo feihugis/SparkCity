@@ -46,6 +46,13 @@ object BuildShapeFileIndex extends Logging{
     buildIndex(sc, hConf)
   }
 
+  def buildIndex(sc: SparkContext, confPath: String, shapeFileDir: String): Unit = {
+    val hConf = new Configuration()
+    hConf.addResource(new Path(confPath))
+    hConf.set("mapred.input.dir", shapeFileDir)
+    buildIndex(sc, hConf)
+  }
+
   def main(args: Array[String]): Unit = {
     val sparkConf = new SparkConf()
       .setAppName("BuildShapefileIndex")
@@ -58,8 +65,24 @@ object BuildShapeFileIndex extends Logging{
 
     val sc = new SparkContext(sparkConf)
     //buildIndex_DC(sc)
-    buildIndex_VA(sc)
+    //buildIndex_VA(sc)
     //buildIndex_MD(sc)
+    val inputDir = "/Users/feihu/Documents/GitHub/SparkCity/data/20170416/"
+
+    buildIndex(sc,
+      "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
+      f"${inputDir}/va"
+    )
+
+    buildIndex(sc,
+      "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
+      f"${inputDir}/md"
+    )
+
+    buildIndex(sc,
+      "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
+      f"${inputDir}/dc"
+    )
   }
 
 }

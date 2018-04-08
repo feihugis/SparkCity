@@ -1,20 +1,18 @@
-package edu.gmu.stc.raster.landsat
+package edu.gmu.stc.analysis
 
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
 
 object MaskBandsRandGandNIR {
-  val maskedPath = "data/r-g-nir-tirs1-swir1.tif"
+  val maskedPath = "data/landsat8_dc/LC08_L1TP_015033_20170416_20170501_01_T1/r-g-nir-tirs1-swir1.tif"
+  // Path to our landsat band geotiffs.
+  def bandPath(b: String) = s"data/landsat8_dc/LC08_L1TP_015033_20170416_20170501_01_T1/LC08_L1TP_015033_20170416_20170501_01_T1_${b}.TIF"
   //constants to differentiate which bands to use
   val R_BAND = 0
   val G_BAND = 1
   val NIR_BAND = 2
   val TIRS1_BAND = 3
   val SWIR1_BAND = 4
-
-  // Path to our landsat band geotiffs.
-  //def bandPath(b: String) = s"data/landsat/LC81070352015218LGN00_${b}.TIF"
-  def bandPath(b: String) = s"data/landsat8_dc/LC08_L1TP_015033_20170822_20170822_01_RT_${b}.TIF"
 
   def main(args: Array[String]): Unit = {
     // Read in the red band

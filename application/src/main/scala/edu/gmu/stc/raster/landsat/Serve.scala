@@ -15,7 +15,7 @@ import akka.stream.{ActorMaterializer, Materializer}
 
 import scala.concurrent._
 import com.typesafe.config.ConfigFactory
-import MaskBandsRandGandNIR.{R_BAND, G_BAND, NIR_BAND, TIRS1_BAND}
+import edu.gmu.stc.analysis.MaskBandsRandGandNIR.{R_BAND, G_BAND, NIR_BAND, TIRS1_BAND}
 
 object Serve extends App with Service {
   val catalogPath = new java.io.File("data/catalog").getAbsolutePath

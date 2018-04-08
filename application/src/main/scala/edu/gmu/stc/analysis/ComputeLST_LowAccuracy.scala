@@ -2,7 +2,7 @@ package edu.gmu.stc.analysis
 
 import com.vividsolutions.jts.geom._
 import edu.gmu.stc.raster.io.GeoTiffReaderHelper
-import edu.gmu.stc.raster.landsat.{Calculations, MaskBandsRandGandNIR}
+import edu.gmu.stc.raster.landsat.Calculations
 import edu.gmu.stc.raster.operation.RasterOperation
 import edu.gmu.stc.vector.VectorUtil
 import edu.gmu.stc.vector.io.ShapeFileReaderHelper

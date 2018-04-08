@@ -109,8 +109,6 @@ object SpatialJoin {
       readAttributes = true,
       isCache = true)
 
-    val num = overlayedRDD.getGeometryRDD.count()
-
     if (!crs1.equalsIgnoreCase(crs2)) {
       overlayedRDD.transforCRS(crs2, longitudeFirst2, crs1, longitudeFirst1)
     }
@@ -128,6 +126,7 @@ object SpatialJoin {
           case "PCI" => computePatchCohesionIndex(geometry1, geometries2)
           case "RP" => computeRoadPercent(geometry1, geometries2)
           case "TP" => computeCoverPercent(geometry1, geometries2)
+          case "WP" => computeCoverPercent(geometry1, geometries2)  //water percent
         }
 
         geometry1
@@ -145,6 +144,116 @@ object SpatialJoin {
           .map(attribute => attribute.getName).++(indexArray)
 
     GeometryReaderUtil.saveRows2CSV(col_names.mkString(","), result.toList.asJava, outputFilePath)
+  }
+
+  def spatialJoinEntrance(sc: SparkContext,
+                  stateName: String,
+                  stateID: String,
+                  dataDir: String = "/Users/feihu/Documents/GitHub/SparkCity/data/20180318/",
+                  gridType: String = "KDBTREE",
+                  indexType: String = "RTREE",
+                  confFilePath: String = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml"): Unit = {
+    // Change this part for configuration
+    val (minX, maxX, minY, maxY) = (-180.0, 180.0, -180.0, 180.0)
+    ///////////////////////////////////////////
+
+    val bbox = new Envelope(minX, maxX, minY, maxY)
+    val baseIndexTable = s"${stateName}_lst_block"
+    val crs1 = "epsg:4269"
+    val crs2 = "epsg:4326"
+    val partitionNum = 36
+
+    val spatialJoinConfig_0 = SpatialJoinConfig(
+      confFilePath = confFilePath,
+      envelope = bbox,
+      gridType = gridType,
+      indexType = indexType,
+      partitionNum = partitionNum,
+      indexTable1 = baseIndexTable,
+      crs1 = crs1,
+      longitudeFirst1 = true,
+      indexTable2 = baseIndexTable,
+      crs2 = crs2,
+      longitudeFirst2 = true,
+      indexArray = Array(),
+      rawAttributes = OSMAttributeUtil.getLayerAtrributes("block_a").asScala.toArray,
+      outputFilePath = s"${dataDir}/${stateName}/result/${stateName}_cb.csv"
+    )
+
+    val spatialJoinConfig_1 = SpatialJoinConfig(
+      confFilePath = confFilePath,
+      envelope = bbox,
+      gridType = gridType,
+      indexType = indexType,
+      partitionNum = partitionNum,
+      indexTable1 = baseIndexTable,
+      crs1 = crs1,
+      longitudeFirst1 = true,
+      indexTable2 =  s"${stateName}_osm_buildings_a_free_1",
+      crs2 = crs2,
+      longitudeFirst2 = true,
+      indexArray = Array("CP", "MPS", "MSI","MNND", "PCI", "FN"),
+      rawAttributes = OSMAttributeUtil.getLayerAtrributes("block_a").asScala.toArray,
+      outputFilePath = s"${dataDir}/${stateName}/result/${stateName}_buildings.csv".toString
+    )
+
+    val spatialJoinConfig_2 = SpatialJoinConfig(
+      confFilePath = confFilePath,
+      envelope = bbox,
+      gridType = gridType,
+      indexType = indexType,
+      partitionNum = partitionNum,
+      indexTable1 = baseIndexTable,
+      crs1 = crs1,
+      longitudeFirst1 = true,
+      indexTable2 = s"${stateName}_osm_roads_free_1",
+      crs2 = crs2,
+      longitudeFirst2 = true,
+      indexArray = Array("RP"),
+      rawAttributes = OSMAttributeUtil.getLayerAtrributes("block_a").asScala.toArray,
+      outputFilePath = s"${dataDir}/${stateName}/result/${stateName}_roads.csv"
+    )
+
+    val spatialJoinConfig_3 = SpatialJoinConfig(
+      confFilePath = confFilePath,
+      envelope = bbox,
+      gridType = gridType,
+      indexType = indexType,
+      partitionNum = partitionNum,
+      indexTable1 = baseIndexTable,
+      crs1 = crs1,
+      longitudeFirst1 = true,
+      indexTable2 = s"${stateName}_lst_traffic",
+      crs2 = crs2,
+      longitudeFirst2 = true,
+      indexArray = Array("TP"),
+      rawAttributes = OSMAttributeUtil.getLayerAtrributes("block_a").asScala.toArray,
+      outputFilePath = s"${dataDir}/${stateName}/result/${stateName}_parkings.csv"
+    )
+
+    val spatialJoinConfig_4 = SpatialJoinConfig(
+      confFilePath = confFilePath,
+      envelope = bbox,
+      gridType = gridType,
+      indexType = indexType,
+      partitionNum = partitionNum,
+      indexTable1 = baseIndexTable,
+      crs1 = crs1,
+      longitudeFirst1 = true,
+      indexTable2 = s"${stateName}_lst_water",
+      crs2 = crs2,
+      longitudeFirst2 = true,
+      indexArray = Array("WP"),
+      rawAttributes = OSMAttributeUtil.getLayerAtrributes("block_a").asScala.toArray,
+      outputFilePath = s"${dataDir}/${stateName}/result/${stateName}_water.csv"
+    )
+
+    spatialJoin(sc, spatialJoinConfig_0)
+    spatialJoin(sc, spatialJoinConfig_1)
+    spatialJoin(sc, spatialJoinConfig_2)
+    spatialJoin(sc, spatialJoinConfig_3)
+    spatialJoin(sc, spatialJoinConfig_4)
+
   }
 
   def main(args: Array[String]): Unit = {
@@ -170,105 +279,18 @@ object SpatialJoin {
     val md_statename = "md"
     val md_stateID = 24
 
-    val stateName = va_statename
-    val stateID = va_stateID
-    val baseIndexTable = s"${stateName}_lst_block"
-    val crs1 = "epsg:4269"
-    val crs2 = "epsg:4326"
+    val dataDir = "/Users/feihu/Documents/GitHub/SparkCity/data/20170416/"
+    val gridType: String = "KDBTREE"
+    val indexType: String = "RTREE"
+    val confFilePath: String = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml"
 
-    val (minX, maxX, minY, maxY) = va_bbox
-    val bbox = new Envelope(minX, maxX, minY, maxY)
+    val spatialJoinParameters = Array((va_statename, va_stateID), (dc_statename, dc_stateID), (md_statename, md_stateID))
 
-    val spatialJoinConfig_0 = SpatialJoinConfig(
-      confFilePath = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
-      envelope = bbox,
-      gridType = "KDBTREE",
-      indexType = "RTREE",
-      partitionNum = 36,
-      indexTable1 = baseIndexTable,
-      crs1 = crs1,
-      longitudeFirst1 = true,
-      indexTable2 = baseIndexTable,
-      crs2 = crs2,
-      longitudeFirst2 = true,
-      indexArray = Array(),
-      rawAttributes = OSMAttributeUtil.getLayerAtrributes("block_a").asScala.toArray,
-      outputFilePath = s"data/${stateName}/result/${stateName}_cb.csv"
-    )
-
-    val spatialJoinConfig_1 = SpatialJoinConfig(
-      confFilePath = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
-      envelope = bbox,
-      gridType = "KDBTREE",
-      indexType = "RTREE",
-      partitionNum = 36,
-      indexTable1 = baseIndexTable,
-      crs1 = crs1,
-      longitudeFirst1 = true,
-      indexTable2 = s"${stateName}_lst_buildings",
-      crs2 = crs2,
-      longitudeFirst2 = true,
-      indexArray = Array("CP", "MPS", "MSI","MNND", "PCI", "FN"),
-      rawAttributes = OSMAttributeUtil.getLayerAtrributes("block_a").asScala.toArray,
-      outputFilePath = s"data/${stateName}/result/${stateName}_buildings.csv"
-    )
-
-    val spatialJoinConfig_2 = SpatialJoinConfig(
-      confFilePath = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
-      envelope = bbox,
-      gridType = "KDBTREE",
-      indexType = "RTREE",
-      partitionNum = 36,
-      indexTable1 = baseIndexTable,
-      crs1 = crs1,
-      longitudeFirst1 = true,
-      indexTable2 = s"${stateName}_osm_roads_free_1",
-      crs2 = crs2,
-      longitudeFirst2 = true,
-      indexArray = Array("RP"),
-      rawAttributes = OSMAttributeUtil.getLayerAtrributes("block_a").asScala.toArray,
-      outputFilePath = s"data/${stateName}/result/${stateName}_roads.csv"
-    )
-
-    val spatialJoinConfig_3 = SpatialJoinConfig(
-      confFilePath = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
-      envelope = bbox,
-      gridType = "KDBTREE",
-      indexType = "RTREE",
-      partitionNum = 36,
-      indexTable1 = baseIndexTable,
-      crs1 = crs1,
-      longitudeFirst1 = true,
-      indexTable2 = s"${stateName}_lst_traffic",
-      crs2 = crs2,
-      longitudeFirst2 = true,
-      indexArray = Array("TP"),
-      rawAttributes = OSMAttributeUtil.getLayerAtrributes("block_a").asScala.toArray,
-      outputFilePath = s"data/${stateName}/result/${stateName}_parkings.csv"
-    )
-
-    val spatialJoinConfig_4 = SpatialJoinConfig(
-      confFilePath = "/Users/feihu/Documents/GitHub/SparkCity/config/conf_lst_va.xml",
-      envelope = bbox,
-      gridType = "KDBTREE",
-      indexType = "RTREE",
-      partitionNum = 36,
-      indexTable1 = baseIndexTable,
-      crs1 = crs1,
-      longitudeFirst1 = true,
-      indexTable2 = s"${stateName}_lst_water",
-      crs2 = crs2,
-      longitudeFirst2 = true,
-      indexArray = Array("CP"),
-      rawAttributes = OSMAttributeUtil.getLayerAtrributes("block_a").asScala.toArray,
-      outputFilePath = s"data/${stateName}/result/${stateName}_water.csv"
-    )
-
-    spatialJoin(sc, spatialJoinConfig_0)
-    spatialJoin(sc, spatialJoinConfig_1)
-    spatialJoin(sc, spatialJoinConfig_2)
-    spatialJoin(sc, spatialJoinConfig_3)
-    spatialJoin(sc, spatialJoinConfig_4)
+    spatialJoinParameters.foreach({
+      case (stateName, stateID) => {
+        spatialJoinEntrance(sc, stateName, stateID.toString, dataDir, gridType, indexType, confFilePath)
+      }
+    })
   }
 
 }

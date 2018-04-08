@@ -114,7 +114,8 @@ public class DAOImpl<T> implements DAO {
 
       try {
         session.beginTransaction();
-        objects = session.createSQLQuery("SELECT * " + hqlQuery).addEntity(cls).list();
+        String queryString = "SELECT * " + hqlQuery;
+        objects = session.createSQLQuery(queryString).addEntity(cls).list();
         session.close();
       } catch(Exception e) {
         System.err.println("Error when attempting to retrieve data via query: " + e);

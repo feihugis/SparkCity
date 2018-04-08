@@ -1,6 +1,7 @@
 package edu.gmu.stc.raster.landsat
 
 import com.typesafe.config.ConfigFactory
+import edu.gmu.stc.analysis.MaskBandsRandGandNIR
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.render._

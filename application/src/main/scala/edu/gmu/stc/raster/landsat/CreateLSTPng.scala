@@ -4,6 +4,7 @@ import java.io.{BufferedWriter, File, FileWriter}
 
 import com.typesafe.config.ConfigFactory
 import com.vividsolutions.jts.geom.Geometry
+import edu.gmu.stc.analysis.MaskBandsRandGandNIR
 import geotrellis.raster.DoubleConstantNoDataCellType
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.raster.io.geotiff.reader.GeoTiffReader
