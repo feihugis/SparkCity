@@ -12,6 +12,8 @@ data
 /log/
 *.json
 *.geojson
+*.csv
 application/src/main/resources/data/
 *.iml
 *.DS_Store
+python/analysis/__pycache__/

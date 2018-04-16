@@ -13,8 +13,10 @@ from sklearn.linear_model import Ridge, RidgeCV
 
 import statsmodels.api as sm
 from scipy.stats import pearsonr
-from analysis.basic_statistics import describe_data, correlation_test
+
 from sklearn.model_selection import train_test_split as sklearn_train_test_split
+
+pd.set_option('display.width', 1000)
 
 POLYGON_ID = "id"
 LST = "lst"
@@ -31,7 +33,7 @@ PCI = "PCI"
 CSV_COLUMNS = "osm_id	code	fclass	name	lst	ndvi	ndwi	ndbi	ndii	mndwi	ndisi	CP	MPS	MSI	MNND	PCI	TP	RP".split("\t")
 FEATURE_COLUMNS = "ndvi	ndwi	ndbi	ndii	mndwi	ndisi	CP	MPS	MSI	MNND	PCI	TP	RP".split("\t")
 LABEL_COLUMN = [LST]
-csvfile = "data/result/va/landuse/join_features.csv"
+csvfile = "data/result/va/result/join_features.csv"
 
 
 def normalize(df):
@@ -64,6 +66,7 @@ def train_test_split(df, x_cols, y_col, test_percent, isStandardize=False, isNor
 
     return X_train, y_train, X_test, y_test
 
+
 def randomforest_regression(X_train, y_train, X_test, y_test, max_depth=6):
     print("-------------------------- RandomForest Regression")
     clf = RandomForestRegressor(max_depth=max_depth, random_state=0)
@@ -81,10 +84,9 @@ def randomforest_regression(X_train, y_train, X_test, y_test, max_depth=6):
     coef = clf.feature_importances_
     coef = list(zip(cols, coef))
     df_coef = pd.DataFrame.from_records(coef)
-    print('Coefficients: \n', df_coef)
+    print('Coefficients: \n', df_coef.T)
+    df_coef.T.to_csv("randomforest_regression.csv")
     return clf
-
-
 
 
 def lasso_regression(X_train, y_train, X_test, y_test, normalize=False):
@@ -107,7 +109,7 @@ def lasso_regression(X_train, y_train, X_test, y_test, normalize=False):
     coef = clf.coef_.tolist()
     coef = list(zip(cols, coef))
     df_coef = pd.DataFrame.from_records(coef)
-    print('Coefficients: \n', df_coef)
+    print('Coefficients: \n', df_coef.T)
     print('Alpha: \n', clf.alpha_)
 
     return clf
@@ -134,8 +136,9 @@ def ridge_regression(X_train, y_train, X_test, y_test, normalize=False):
     coef = clf.coef_.tolist()[0]
     coef = list(zip(cols, coef))
     df_coef = pd.DataFrame.from_records(coef)
-    print('Coefficients: \n', df_coef)
+    print('Coefficients: \n', df_coef.T)
     print('Alpha: \n', clf.alpha_)
+    df_coef.T.to_csv("ridge_regression.csv")
 
     return clf
 
@@ -163,7 +166,8 @@ def linear_regression(X_train, y_train, X_test, y_test, normalize=False):
     coef = regr.coef_.tolist()[0]
     coef = list(zip(cols, coef))
     df_coef = pd.DataFrame.from_records(coef)
-    print('Coefficients: \n', df_coef)
+    print('Coefficients: \n', df_coef.T)
+    df_coef.T.to_csv("linear_regression.csv")
 
     return regr
 
@@ -235,31 +239,8 @@ def main(args=None):
 
     # describe_data(df[CSV_COLUMNS], CSV_COLUMNS)
 
-    result = correlation_test(df[CSV_COLUMNS])
-    print(result)
-
-    test_percent = 0.3
-    X_train, y_train, X_test, y_test = train_test_split(df,
-                                                        FEATURE_COLUMNS,
-                                                        LABEL_COLUMN,
-                                                        test_percent,
-                                                        isNormalize=False,
-                                                        isStandardize=True)
-
-    linear_regression(X_train, y_train, X_test, y_test, normalize=False)
-    lasso_regression(X_train, y_train, X_test, y_test, normalize=False)
-    ridge_regression(X_train, y_train, X_test, y_test, normalize=False)
-    randomforest_regression(X_train, y_train, X_test, y_test)
-
-
-    result = stepwise_selection(X_train, y_train,
-                       initial_list=[],
-                       threshold_in=0.01,
-                       threshold_out=0.05,
-                       verbose=True)
-
-    print('resulting features:')
-    print(result)
+    #result = correlation_test(df[CSV_COLUMNS])
+    #print(result)
 
 
 if __name__ == '__main__':

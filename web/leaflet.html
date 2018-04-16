@@ -88,7 +88,7 @@
             layers: 'LST:va_lst_pois',
             transparency: 'true',
             format: 'image/png',
-            opacity: 0.5
+            opacity: 0.1
         }),
         buildings: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?',
                                    {
@@ -101,19 +101,19 @@
             layers: 'LST:va_lst_landuse',
             transparency: 'true',
             format: 'image/png',
-            opacity: 0.5
+            opacity: 0.1
         }),
         parking: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?', {
             layers: 'LST:va_lst_traffic',
             transparency: 'true',
             format: 'image/png',
-            opacity: 0.5
+            opacity: 0.1
         }),
         water: L.tileLayer.wms('http://localhost:8080/geoserver/LST/wms?', {
             layers: 'LST:va_lst_water',
             transparency: 'true',
             format: 'image/png',
-            opacity: 0.5
+            opacity: 0.1
         })
     }
 

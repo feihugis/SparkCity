@@ -8,6 +8,7 @@ import os
 from matplotlib import rcParams
 rcParams.update({'figure.autolayout': True})
 
+
 def describe_data(df, col_names):
     # density plot
     df.plot(kind='density', subplots=True, layout=(len(col_names), 1), sharex=False, figsize=(10, 10))
@@ -29,10 +30,6 @@ def describe_data(df, col_names):
     # Scatterplot Matrix
     pd.scatter_matrix(df, figsize=(10, 10))
     plt.show()
-
-
-def correlation_test(df, method='pearson'):
-    return df.corr(method=method)
 
 
 def top_poi(statename, key='lst'):

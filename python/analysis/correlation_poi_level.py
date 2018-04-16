@@ -1,6 +1,7 @@
 
-from analysis.linear_regression import load_data, correlation_test, train_test_split, linear_regression, ridge_regression, lasso_regression, stepwise_selection, describe_data, randomforest_regression
+from analysis.linear_regression import load_data, train_test_split, linear_regression, ridge_regression, lasso_regression, stepwise_selection, randomforest_regression
 from analysis.basic_statistics import filter_by_area
+
 
 def regression_analysis(csv_file, feature_columns, target_column, fclass="", test_percent=0.3):
     df = load_data(csv_file, hasheader=True)
@@ -11,9 +12,6 @@ def regression_analysis(csv_file, feature_columns, target_column, fclass="", tes
     print(len(df))
 
     #describe_data(df[feature_columns + target_column], feature_columns + target_column)
-
-    result = correlation_test(df[feature_columns + target_column])
-    print(result)
 
     X_train, y_train, X_test, y_test = train_test_split(df,
                                                         feature_columns,
@@ -38,8 +36,9 @@ def regression_analysis(csv_file, feature_columns, target_column, fclass="", tes
 
 
 def main():
-    statename = "va"
-    csv_file = f"data/{statename}/lst/{statename}_lst_pois.csv"
+    statename = "md"
+    input_dir = "/Users/feihu/Documents/GitHub/SparkCity/data/"
+    csv_file = f"{input_dir}/{statename}/lst/{statename}_lst_pois.csv"
     feature_columns = "ndvi,ndwi,ndbi,ndii,ndisi".split(",")
     target_column = ["lst"]
     test_percent = 0.3
