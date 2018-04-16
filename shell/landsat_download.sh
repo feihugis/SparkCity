@@ -1,15 +1,18 @@
 #! /bin/bash
 
 LANDSAT_NAME="LC08_L1TP_015033_20170822_20170822_01_RT"
-OUTPUT_DIR='./'
-wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B3.TIF $OUTPUT_DIR
-wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B4.TIF $OUTPUT_DIR
-wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B5.TIF $OUTPUT_DIR
-wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_BQA.TIF $OUTPUT_DIR
-wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B10.TIF $OUTPUT_DIR
-wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_MTL.txt $OUTPUT_DIR
+OUTPUT_DIR="/var/lib/hadoop-hdfs/SparkCity/data/$LANDSAT_NAME"
+mkdir -p $OUTPUT_DIR
 
-
-
-# https://s3.amazonaws.com/geotrellis-sample-datasets/landsat/LC80140322014139LGN00.tar.bz
-# tar xvfj LC80140322014139LGN00.tar.bz
+wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B1.TIF -P $OUTPUT_DIR
+wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B2.TIF -P $OUTPUT_DIR
+wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B3.TIF -P $OUTPUT_DIR
+wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B4.TIF -P $OUTPUT_DIR
+wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B5.TIF -P $OUTPUT_DIR
+wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B6.TIF -P $OUTPUT_DIR
+wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B7.TIF -P $OUTPUT_DIR
+wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B8.TIF -P $OUTPUT_DIR
+wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B9.TIF -P $OUTPUT_DIR
+wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B10.TIF -P $OUTPUT_DIR
+wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B11.TIF -P $OUTPUT_DIR
+wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_BQA.TIF -P $OUTPUT_DIR
