@@ -7,7 +7,7 @@
 download_landsat()
 {
     LANDSAT_NAME=$1
-    OUTPUT_DIR=$2
+    OUTPUT_DIR="$2/$1"
     mkdir -p $OUTPUT_DIR
 
     wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B1.TIF -P $OUTPUT_DIR
@@ -23,5 +23,11 @@ download_landsat()
     wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B11.TIF -P $OUTPUT_DIR
     wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_BQA.TIF -P $OUTPUT_DIR
 }
+
+while read p; do
+    echo $p
+    download_landsat $p ../data/
+done < "landsat_files.txt"
+
 
 
