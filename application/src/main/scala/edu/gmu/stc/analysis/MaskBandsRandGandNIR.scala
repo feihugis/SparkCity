@@ -7,6 +7,7 @@ import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
+import org.apache.spark.SparkContext
 
 object MaskBandsRandGandNIR {
   val maskedPath = "data/landsat8_dc/LC08_L1TP_015033_20170416_20170501_01_T1/r-g-nir-tirs1-swir1-test.tif"
@@ -79,6 +80,12 @@ object MaskBandsRandGandNIR {
     // MultibandGeoTiff(mb, rGeoTiff.extent, rGeoTiff.crs).write(maskedPath)
     val byteArray = MultibandGeoTiff(mb, rGeoTiff.extent, rGeoTiff.crs).toByteArray
     HdfsUtils.write(new Path(output), new Configuration(), byteArray)
+  }
+
+  def combineBands(sc: SparkContext, landsatTxtPath: String): Unit = {
+    val paths = sc.textFile(landsatTxtPath)
+    val suffix = "_r-g-nir-tirs1-swir1.tif"
+    paths.foreach(landsatPre => combineBands(landsatPre, landsatPre + suffix))
   }
 
   def main(args: Array[String]): Unit = {
