@@ -24,7 +24,7 @@ object ComputeLST_LowAccuracy extends Logging{
 
   def computeLST(hConf: Configuration,
                  landsatMulBandFilePath: Path): (Extent, Tile) = {
-    val geotiff = GeoTiffReaderHelper.readMultiband(landsatMulBandFilePath, hConf)
+    val geotiff = GeoTiffReaderHelper.readMultiBand(landsatMulBandFilePath, hConf)
     val tile = geotiff.tile.convert(DoubleConstantNoDataCellType)
     val (ndvi_min, ndvi_max) = tile.combineDouble(MaskBandsRandGandNIR.R_BAND,
       MaskBandsRandGandNIR.NIR_BAND,

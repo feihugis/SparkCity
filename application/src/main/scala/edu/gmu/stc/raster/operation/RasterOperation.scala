@@ -116,7 +116,7 @@ object RasterOperation extends  Logging {
   def computeSpectralIndex(hConf: Configuration,
                            landsatMulBandFilePath: Path,
                            indexNames: Array[String]): (Extent, Array[Tile]) = {
-    val geotiff = GeoTiffReaderHelper.readMultiband(landsatMulBandFilePath, hConf)
+    val geotiff = GeoTiffReaderHelper.readMultiBand(landsatMulBandFilePath, hConf)
     val tile = geotiff.tile.convert(DoubleConstantNoDataCellType)
 
     val tiles = indexNames.map(indexName => {
@@ -199,7 +199,7 @@ object RasterOperation extends  Logging {
 
   def computeLSTAndNDVI(hConf: Configuration,
                         landsatMulBandFilePath: Path): (Extent, Tile, Tile) = {
-    val geotiff = GeoTiffReaderHelper.readMultiband(landsatMulBandFilePath, hConf)
+    val geotiff = GeoTiffReaderHelper.readMultiBand(landsatMulBandFilePath, hConf)
     val tile = geotiff.tile.convert(DoubleConstantNoDataCellType)
     val ndviTile = tile.combineDouble(MaskBandsRandGandNIR.R_BAND,
       MaskBandsRandGandNIR.NIR_BAND,
