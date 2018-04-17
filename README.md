@@ -26,7 +26,8 @@ media data.
     - STCSpark_Overlap_v3: `spark-shell --master yarn --deploy-mode client --num-executors 5 --driver-memory 12g --executor-memory 10g --executor-cores 24 --class edu.gmu.stc.vector.sparkshell.STC_OverlapTest_v3 --jars application/target/sparkcity-application-1.1.0-SNAPSHOT.jar config/conf.xml Partition_Num GridType IndexType /test.geojson`
     - SpatialJoin: `spark-shell --master yarn --deploy-mode client --num-executors 16 --driver-memory 12g --executor-memory 10g --executor-cores 24 --class edu.gmu.stc.vector.sparkshell.SpatialJoin --jars application/target/sparkcity-application-1.1.0-SNAPSHOT.jar  config/conf.xml Partition_Num GridType IndexType`
     
-
+ * Launch Spark-shell:
+ 
 
 
 ## Resources
