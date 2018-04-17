@@ -22,6 +22,8 @@ download_landsat()
     wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B10.TIF -P $OUTPUT_DIR
     wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_B11.TIF -P $OUTPUT_DIR
     wget http://landsat-pds.s3.amazonaws.com/c1/L8/015/033/$LANDSAT_NAME/"$LANDSAT_NAME"_BQA.TIF -P $OUTPUT_DIR
+
+    hadoop fs -put $OUTPUT_DIR /SparkCity/data/
 }
 
 while read p; do
