@@ -152,11 +152,10 @@ object ComputeSpectralIndex extends Logging{
     })
   }
 
-  def computeSpectralIndex(sc: SparkContext,
-                           stateName: String, stateID: String,
-                           landsatTiff: String, outputDir: String,
-                           time: String,
-                           hConfFile: String): Unit = {
+  def getSpectralIndexConfig(stateName: String, stateID: String,
+                            landsatTiff: String, outputDir: String,
+                            time: String,
+                            hConfFile: String): Array[ComputeSpectralIndexConfig] = {
     //val hConfFile = "config/conf_lst_va.xml"
 
     val buildingsConfig = ComputeSpectralIndexConfig(
@@ -231,16 +230,23 @@ object ComputeSpectralIndex extends Logging{
       outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_block_${time}.shp"
     )
 
-    val spectralIndexNames = Array("lst", "ndvi", "ndwi", "ndbi", "ndii", "mndwi", "ndisi")
     val configs = Array(landuseConfig, poisConfig, trafficConfig, waterConfig, blockConfig/*, buildingsConfig*/)
+    configs
+  }
 
+  def computeInCluster(sc: SparkContext, landsatTiff: String, time: String, outputDir: String, hConfFile: String): Unit = {
+    val spectralIndexNames = Array("lst", "ndvi", "ndwi", "ndbi", "ndii", "mndwi", "ndisi")
 
-    val configRDD = sc.parallelize(configs)
-    configRDD.foreach(config => {
+    val configs1 = getSpectralIndexConfig("va", "51", landsatTiff, outputDir, time, hConfFile)
+    val configs2 = getSpectralIndexConfig("md", "24", landsatTiff, outputDir, time, hConfFile)
+    val configs3 = getSpectralIndexConfig("dc", "11", landsatTiff, outputDir, time, hConfFile)
+
+    val configs = configs1 ++ configs2 ++ configs3
+
+    sc.parallelize(configs).foreach(config => {
       addSpectralIndexToOSMLayer(config, spectralIndexNames)
       logInfo("Finished the processing of " + config.vectorIndexTableName)
     })
-
   }
 
   def main(args: Array[String]): Unit = {
@@ -252,6 +258,7 @@ object ComputeSpectralIndex extends Logging{
     val landsatTiff = "data/landsat8_dc/LC08_L1TP_015033_20170416_20170501_01_T1/r-g-nir-tirs1-swir1.tif"
     val outputDir = "/Users/feihu/Documents/GitHub/SparkCity/data/20170416/"
     val hConfFile: String = "config/conf_lst_va.xml"
+    val time = "20170416"
 
 
     val inputParameters = Array(
@@ -262,7 +269,7 @@ object ComputeSpectralIndex extends Logging{
 
     inputParameters.foreach({
       case (stateName: String, stateID: String, landsatTiff: String, outputDir: String) => {
-        computeSpectralIndex(stateName, stateID, landsatTiff, outputDir, "20170416", hConfFile)
+        computeSpectralIndex(stateName, stateID, landsatTiff, outputDir, time, hConfFile)
       }
     })
 
