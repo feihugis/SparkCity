@@ -65,8 +65,11 @@ object ComputeSpectralIndex extends Logging{
       computeSpectralIndexConfig.outputShpPath.replace(".shp", ".csv"))
   }
 
-  def computeSpectralIndex(stateName: String, stateID: String, landsatTiff: String, outputDir: String): Unit = {
-    val hConfFile = "config/conf_lst_va.xml"
+  def computeSpectralIndex(stateName: String, stateID: String,
+                           landsatTiff: String, outputDir: String,
+                           time: String,
+                           hConfFile: String = "config/conf_lst_va.xml"): Unit = {
+    //val hConfFile = "config/conf_lst_va.xml"
 
     val buildingsConfig = ComputeSpectralIndexConfig(
       hConfFile = hConfFile,
@@ -77,7 +80,7 @@ object ComputeSpectralIndex extends Logging{
       vectorCRS = "epsg:4326",
       vectorLongitudeFirst = true,
       osmLayerName = "buildings_a",
-      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_buildings.shp"
+      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_buildings_${time}.shp"
     )
 
     val landuseConfig = ComputeSpectralIndexConfig(
@@ -89,7 +92,7 @@ object ComputeSpectralIndex extends Logging{
       vectorCRS = "epsg:4326",
       vectorLongitudeFirst = true,
       osmLayerName = "landuse_a",
-      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_landuse.shp"
+      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_landuse_${time}.shp"
     )
 
     val poisConfig = ComputeSpectralIndexConfig(
@@ -101,7 +104,7 @@ object ComputeSpectralIndex extends Logging{
       vectorCRS = "epsg:4326",
       vectorLongitudeFirst = true,
       osmLayerName = "pois_a",
-      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_pois.shp"
+      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_pois_${time}.shp"
     )
 
     val trafficConfig = ComputeSpectralIndexConfig(
@@ -113,7 +116,7 @@ object ComputeSpectralIndex extends Logging{
       vectorCRS = "epsg:4326",
       vectorLongitudeFirst = true,
       osmLayerName = "traffic_a",
-      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_traffic.shp"
+      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_traffic_${time}.shp"
     )
 
     val waterConfig = ComputeSpectralIndexConfig(
@@ -125,7 +128,7 @@ object ComputeSpectralIndex extends Logging{
       vectorCRS = "epsg:4326",
       vectorLongitudeFirst = true,
       osmLayerName = "water_a",
-      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_water.shp"
+      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_water_${time}.shp"
     )
 
     val blockConfig = ComputeSpectralIndexConfig(
@@ -137,7 +140,7 @@ object ComputeSpectralIndex extends Logging{
       vectorCRS = "epsg:4269",
       vectorLongitudeFirst = true,
       osmLayerName = "block_a",
-      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_block.shp"
+      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_block_${time}.shp"
     )
 
     val spectralIndexNames = Array("lst", "ndvi", "ndwi", "ndbi", "ndii", "mndwi", "ndisi")
@@ -166,6 +169,97 @@ object ComputeSpectralIndex extends Logging{
 
   }
 
+  def computeSpectralIndex(sc: SparkContext,
+                           stateName: String, stateID: String,
+                           landsatTiff: String, outputDir: String,
+                           time: String,
+                           hConfFile: String = "config/conf_lst_va.xml"): Unit = {
+    //val hConfFile = "config/conf_lst_va.xml"
+
+    val buildingsConfig = ComputeSpectralIndexConfig(
+      hConfFile = hConfFile,
+      rasterFile = landsatTiff,
+      rasterCRS = "epsg:32618",
+      rasterLongitudeFirst = true,
+      vectorIndexTableName = s"${stateName}_osm_buildings_a_free_1",
+      vectorCRS = "epsg:4326",
+      vectorLongitudeFirst = true,
+      osmLayerName = "buildings_a",
+      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_buildings_${time}.shp"
+    )
+
+    val landuseConfig = ComputeSpectralIndexConfig(
+      hConfFile = hConfFile,
+      rasterFile = landsatTiff,
+      rasterCRS = "epsg:32618",
+      rasterLongitudeFirst = true,
+      vectorIndexTableName = s"${stateName}_osm_landuse_a_free_1",
+      vectorCRS = "epsg:4326",
+      vectorLongitudeFirst = true,
+      osmLayerName = "landuse_a",
+      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_landuse_${time}.shp"
+    )
+
+    val poisConfig = ComputeSpectralIndexConfig(
+      hConfFile = hConfFile,
+      rasterFile = landsatTiff,
+      rasterCRS = "epsg:32618",
+      rasterLongitudeFirst = true,
+      vectorIndexTableName = s"${stateName}_osm_pois_a_free_1",
+      vectorCRS = "epsg:4326",
+      vectorLongitudeFirst = true,
+      osmLayerName = "pois_a",
+      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_pois_${time}.shp"
+    )
+
+    val trafficConfig = ComputeSpectralIndexConfig(
+      hConfFile = hConfFile,
+      rasterFile = landsatTiff,
+      rasterCRS = "epsg:32618",
+      rasterLongitudeFirst = true,
+      vectorIndexTableName = s"${stateName}_osm_traffic_a_free_1",
+      vectorCRS = "epsg:4326",
+      vectorLongitudeFirst = true,
+      osmLayerName = "traffic_a",
+      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_traffic_${time}.shp"
+    )
+
+    val waterConfig = ComputeSpectralIndexConfig(
+      hConfFile = hConfFile,
+      rasterFile = landsatTiff,
+      rasterCRS = "epsg:32618",
+      rasterLongitudeFirst = true,
+      vectorIndexTableName = s"${stateName}_osm_water_a_free_1",
+      vectorCRS = "epsg:4326",
+      vectorLongitudeFirst = true,
+      osmLayerName = "water_a",
+      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_water_${time}.shp"
+    )
+
+    val blockConfig = ComputeSpectralIndexConfig(
+      hConfFile = hConfFile,
+      rasterFile = landsatTiff,
+      rasterCRS = "epsg:32618",
+      rasterLongitudeFirst = true,
+      vectorIndexTableName = s"${stateName}_cb_2016_${stateID}_bg_500k",
+      vectorCRS = "epsg:4269",
+      vectorLongitudeFirst = true,
+      osmLayerName = "block_a",
+      outputShpPath = s"${outputDir}/${stateName}/lst/${stateName}_lst_block_${time}.shp"
+    )
+
+    val spectralIndexNames = Array("lst", "ndvi", "ndwi", "ndbi", "ndii", "mndwi", "ndisi")
+    val configs = Array(landuseConfig, poisConfig, trafficConfig, waterConfig, blockConfig/*, buildingsConfig*/)
+
+
+    val configRDD = sc.parallelize(configs)
+    configRDD.foreach(config => {
+      addSpectralIndexToOSMLayer(config, spectralIndexNames)
+      logInfo("Finished the processing of " + config.vectorIndexTableName)
+    })
+
+  }
+
   def main(args: Array[String]): Unit = {
 
     // va 51
@@ -184,7 +278,7 @@ object ComputeSpectralIndex extends Logging{
 
     inputParameters.foreach({
       case (stateName: String, stateID: String, landsatTiff: String, outputDir: String) => {
-        computeSpectralIndex(stateName, stateID, landsatTiff, outputDir)
+        computeSpectralIndex(stateName, stateID, landsatTiff, outputDir, "20170416")
       }
     })
 

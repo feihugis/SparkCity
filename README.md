@@ -34,6 +34,12 @@ media data.
  val input = "/SparkCity/data/LC08_L1TP_015033_20170822_20170822_01_RT/LC08_L1TP_015033_20170822_20170822_01_RT"
  val output = "/SparkCity/data/LC08_L1TP_015033_20170822_20170822_01_RT/LC08_L1TP_015033_20170822_20170822_01_RT_r-g-nir-tirs1-swir1-test.tif"
  MaskBandsRandGandNIR.combineBands(input, output)
+ 
+ ------------------------------------------------------
+ 
+ import edu.gmu.stc.analysis.MaskBandsRandGandNIR
+ val landsatTxtPath = "/SparkCity/landsat_hdfs"
+ MaskBandsRandGandNIR.combineBands(sc, landsatTxtPath)
  ```
  
 

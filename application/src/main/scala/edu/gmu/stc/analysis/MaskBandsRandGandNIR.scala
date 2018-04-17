@@ -84,8 +84,10 @@ object MaskBandsRandGandNIR {
 
   def combineBands(sc: SparkContext, landsatTxtPath: String): Unit = {
     val paths = sc.textFile(landsatTxtPath)
+    val pathRDD = paths.repartition(paths.count().toInt)
+
     val suffix = "_r-g-nir-tirs1-swir1.tif"
-    paths.foreach(landsatPre => combineBands(landsatPre, landsatPre + suffix))
+    pathRDD.foreach(landsatPre => combineBands(landsatPre, landsatPre + suffix))
   }
 
   def main(args: Array[String]): Unit = {
