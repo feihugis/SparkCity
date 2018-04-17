@@ -11,7 +11,7 @@ import geotrellis.raster.{DoubleConstantNoDataCellType, Tile}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.vector.Extent
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.geotools.geometry.jts.JTS
 import org.apache.spark.internal.Logging
 
@@ -230,7 +230,9 @@ object RasterOperation extends  Logging {
                                          indexNames: Array[String]
                                         ): List[Geometry] = {
     val hConf = new Configuration()
-    hConf.addResource(new Path(hConfFile))
+    val fs = FileSystem.get(hConf)
+    val inputStream = fs.open(new Path(hConfFile))
+    hConf.addResource(inputStream)
 
     val (rasterExtent, indexTiles) = RasterOperation.computeSpectralIndex(hConf, new Path(rasterFile), indexNames)
 

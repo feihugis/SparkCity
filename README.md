@@ -53,6 +53,17 @@ media data.
  BuildShapeFileIndex.buildIndex(sc, hconf, inputDir + "/md")
  ```
 
+ * Compute SpectralIndex
+```scala 
+import edu.gmu.stc.analysis.ComputeSpectralIndex
+val landsatTiff = "/SparkCity/data/LC08_L1TP_015033_20170416_20170501_01_T1/LC08_L1TP_015033_20170416_20170501_01_T1_r-g-nir-tirs1-swir1.tif"
+val time = "20170416"
+val outputDir = "SparkCity/data"
+val hConfFile = "/var/lib/hadoop-hdfs/SparkCity/config/conf_lst_cluster.xml"
+ComputeSpectralIndex.computeInCluster(sc, landsatTiff, time, outputDir, hConfFile)
+```
+
+
  
  
 

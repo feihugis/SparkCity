@@ -272,7 +272,5 @@ object ComputeSpectralIndex extends Logging{
         computeSpectralIndex(stateName, stateID, landsatTiff, outputDir, time, hConfFile)
       }
     })
-
-
   }
 }
