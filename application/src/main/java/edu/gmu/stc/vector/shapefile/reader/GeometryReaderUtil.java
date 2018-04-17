@@ -204,7 +204,7 @@ public class GeometryReaderUtil {
     URI fsURI = new URI(hConf.get("fs.default.name"));
 
     FileSystem fs = FileSystem.get(fsURI, hConf);
-    Path file = new Path(fsURI + filepath);
+    Path file = new Path(fsURI + "/" +filepath);
     Path parentDir = file.getParent();
 
     if (fs.exists(file)) {
