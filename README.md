@@ -27,6 +27,14 @@ media data.
     - SpatialJoin: `spark-shell --master yarn --deploy-mode client --num-executors 16 --driver-memory 12g --executor-memory 10g --executor-cores 24 --class edu.gmu.stc.vector.sparkshell.SpatialJoin --jars application/target/sparkcity-application-1.1.0-SNAPSHOT.jar  config/conf.xml Partition_Num GridType IndexType`
     
  * Launch Spark-shell:
+ ```
+ ~/spark-2.3.0-bin-hadoop2.6/bin//spark-shell --master yarn --deploy-mode client --num-executors 10 --driver-memory 12g --executor-memory 10g --executor-cores 24 --jars ~/SparkCity/application/target/sparkcity-application-1.1.0-SNAPSHOT.jar
+ 
+ import edu.gmu.stc.analysis.MaskBandsRandGandNIR
+ val input = "/SparkCity/data/LC08_L1TP_015033_20170822_20170822_01_RT/LC08_L1TP_015033_20170822_20170822_01_RT"
+ val output = "/SparkCity/data/LC08_L1TP_015033_20170822_20170822_01_RT/LC08_L1TP_015033_20170822_20170822_01_RT_r-g-nir-tirs1-swir1-test.tif"
+ MaskBandsRandGandNIR.combineBands(input, output)
+ ```
  
 
 

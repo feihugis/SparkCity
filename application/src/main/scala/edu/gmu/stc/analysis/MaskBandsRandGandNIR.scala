@@ -78,7 +78,7 @@ object MaskBandsRandGandNIR {
     println("Writing out the multiband R + G + NIR + TIRS1 + SWIR1 tile...")
     // MultibandGeoTiff(mb, rGeoTiff.extent, rGeoTiff.crs).write(maskedPath)
     val byteArray = MultibandGeoTiff(mb, rGeoTiff.extent, rGeoTiff.crs).toByteArray
-    HdfsUtils.write(new Path(maskedPath), new Configuration(), byteArray)
+    HdfsUtils.write(new Path(output), new Configuration(), byteArray)
   }
 
   def main(args: Array[String]): Unit = {

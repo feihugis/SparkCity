@@ -63,6 +63,8 @@ object HdfsUtils extends Logging{
 
   def write(path: Path, conf: Configuration, bytes: Array[Byte]): Unit = {
     val fs = path.getFileSystem(conf)
+    if (pathExists(path, conf)) return
+
     val out = fs.create(path, false, bytes.length, 3, bytes.length - (bytes.length%512) + 512)
     out.write(bytes)
     out.flush()
