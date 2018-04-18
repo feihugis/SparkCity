@@ -218,8 +218,9 @@ public class GeometryReaderUtil {
 
     //OutputStream outputStream = fs.create(file);
 
+    File localFile = new File("./" + filepath);
     Map<String, Serializable> params = new HashMap<String, Serializable>();
-    params.put(ShapefileDataStoreFactory.URLP.key, file.toUri().toURL());
+    params.put(ShapefileDataStoreFactory.URLP.key, localFile.toURI().toURL());
     ShapefileDataStore ds = (ShapefileDataStore) new ShapefileDataStoreFactory().createNewDataStore(params);
 
     SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
@@ -245,8 +246,7 @@ public class GeometryReaderUtil {
     ds.createSchema(tb.buildFeatureType());
     ds.setCharset(Charset.forName("GBK"));
 
-    FeatureWriter<SimpleFeatureType, SimpleFeature> writer = ds.getFeatureWriter(ds.getTypeNames()[0],
-                                                                                 Transaction.AUTO_COMMIT);
+    FeatureWriter<SimpleFeatureType, SimpleFeature> writer = ds.getFeatureWriter(ds.getTypeNames()[0],Transaction.AUTO_COMMIT);
 
     boolean hasAttribute = !attributeScheme.isEmpty();
     Iterator<Geometry> geometryIterator = geometries.iterator();
@@ -266,10 +266,12 @@ public class GeometryReaderUtil {
       }
     }
 
-
     writer.write();
     writer.close();
     ds.dispose();
+
+    //copy local shapefile to HDFS
+    fs.copyFromLocalFile(true, new Path(localFile.getParent()), file.getParent());
   }
 
   public static void saveDbfAsCSV(List<Geometry> geometries,
