@@ -3,7 +3,7 @@ package edu.gmu.stc.hdfs
 import java.io.IOException
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileStatus, FileUtil, Path}
+import org.apache.hadoop.fs.{FileStatus, FileSystem, FileUtil, Path}
 import org.apache.spark.internal.Logging
 
 import scala.collection.mutable.ListBuffer
@@ -32,6 +32,11 @@ object HdfsUtils extends Logging{
       fs.mkdirs(path)
     else
     if(!fs.isDirectory(path)) logError(s"Directory $path does not exist on ${fs.getUri}")
+  }
+
+  def getDataLocation(fs: FileSystem, path: Path): Array[String] = {
+    val blockLocations = fs.getFileBlockLocations(path, 0, fs.getFileStatus(path).getLen)
+    blockLocations.flatMap(blockLocation => blockLocation.getHosts)
   }
 
   /*

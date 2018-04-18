@@ -1,6 +1,7 @@
 package edu.gmu.stc.analysis
 
 import com.vividsolutions.jts.geom._
+import edu.gmu.stc.hdfs.HdfsUtils
 import edu.gmu.stc.raster.io.GeoTiffReaderHelper
 import edu.gmu.stc.raster.landsat.Calculations
 import edu.gmu.stc.raster.operation.RasterOperation
@@ -14,7 +15,7 @@ import geotrellis.raster.io.geotiff.GeoTiff
 import geotrellis.raster.{DoubleConstantNoDataCellType, Tile}
 import geotrellis.vector.Extent
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.internal.Logging
 import org.geotools.geometry.jts.JTS
@@ -234,20 +235,39 @@ object ComputeSpectralIndex extends Logging{
     configs
   }
 
-  def computeInCluster(sc: SparkContext, landsatTiff: String, time: String, outputDir: String, hConfFile: String): Unit = {
-    val spectralIndexNames = Array("lst", "ndvi", "ndwi", "ndbi", "ndii", "mndwi", "ndisi")
-
+  def getSpectralIndexConfigCases(sc: SparkContext, landsatTiff: String, time: String, outputDir: String, hConfFile: String): Array[(ComputeSpectralIndexConfig, Array[String])] = {
     val configs1 = getSpectralIndexConfig("va", "51", landsatTiff, outputDir, time, hConfFile)
     val configs2 = getSpectralIndexConfig("md", "24", landsatTiff, outputDir, time, hConfFile)
     val configs3 = getSpectralIndexConfig("dc", "11", landsatTiff, outputDir, time, hConfFile)
 
     val configs = configs1 ++ configs2 ++ configs3
+    val fs = FileSystem.get(sc.hadoopConfiguration)
+    val hosts = HdfsUtils.getDataLocation(fs, new Path(landsatTiff))
+    configs.map(config => (config, hosts))
 
-    sc.parallelize(configs).foreach(config => {
+
+    /*sc.parallelize(configs).foreach(config => {
       addSpectralIndexToOSMLayer(config, spectralIndexNames)
       logInfo("Finished the processing of " + config.vectorIndexTableName)
+    })*/
+  }
+
+  def computeSpectralIndexInParallel(sc: SparkContext, landsatTiffHDFSTxt: String, outputDir: String, hConfFile: String): Unit = {
+    val spectralIndexNames = Array("lst", "ndvi", "ndwi", "ndbi", "ndii", "mndwi", "ndisi")
+
+    val landsatFiles = sc.textFile(landsatTiffHDFSTxt).collect()
+
+    val configCases = landsatFiles.flatMap(landsatFilePath => {
+      val time = landsatFilePath.split("_")(3)
+      getSpectralIndexConfigCases(sc, landsatFilePath, time, outputDir, hConfFile)
+    })
+
+    sc.makeRDD(configCases).foreach(config => {
+      addSpectralIndexToOSMLayer(config._1, spectralIndexNames)
+      logInfo("Finished the processing of " + config._1.vectorIndexTableName)
     })
   }
+
 
   def main(args: Array[String]): Unit = {
 
