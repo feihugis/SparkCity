@@ -39,7 +39,7 @@ media data.
  ```
  ```scala
  import edu.gmu.stc.analysis.MaskBandsRandGandNIR
- val landsatTxtPath = "/SparkCity/landsat_hdfs"
+ val landsatTxtPath = landsat_hdfs_prefix
  MaskBandsRandGandNIR.combineBands(sc, landsatTxtPath)
  ```
  
