@@ -66,6 +66,42 @@ object ComputeSpectralIndex extends Logging{
       computeSpectralIndexConfig.outputShpPath.replace(".shp", ".csv"))
   }
 
+  def addSpectralIndexToOSMLayer(landsatTiffPath: String,
+                                 hConf: Configuration,
+                                 computeSpectralIndexConfigs: Array[ComputeSpectralIndexConfig],
+                                 spectralIndexNames: Array[String]): Unit = {
+    val (tiffExtent, multiBandTiffTiles) = RasterOperation.readMultiBandGeoTiff(hConf, new Path(landsatTiffPath))
+    val indexTiles = RasterOperation.computeSpectralIndex(multiBandTiffTiles, spectralIndexNames)
+
+    computeSpectralIndexConfigs.foreach(computeSpectralIndexConfig => {
+      val polygonsWithSpectralIndex = RasterOperation
+        .extractMeanValueFromTileByGeometry(
+          hConf,
+          tiffExtent,
+          indexTiles,
+          computeSpectralIndexConfig.rasterCRS,
+          computeSpectralIndexConfig.rasterLongitudeFirst,
+          computeSpectralIndexConfig.vectorIndexTableName,
+          computeSpectralIndexConfig.vectorCRS,
+          computeSpectralIndexConfig.vectorLongitudeFirst
+        )
+
+      val attributeSchema = OSMAttributeUtil.getLayerAtrributes(computeSpectralIndexConfig.osmLayerName)
+
+      GeometryReaderUtil.saveAsShapefile(
+        computeSpectralIndexConfig.outputShpPath,
+        computeSpectralIndexConfig.vectorCRS,
+        classOf[Polygon],
+        polygonsWithSpectralIndex.asJava,
+        attributeSchema)
+
+      GeometryReaderUtil.saveDbfAsCSV(
+        polygonsWithSpectralIndex.asJava,
+        attributeSchema,
+        computeSpectralIndexConfig.outputShpPath.replace(".shp", ".csv"))
+    })
+  }
+
   def computeSpectralIndex(stateName: String, stateID: String,
                            landsatTiff: String, outputDir: String,
                            time: String,
@@ -235,16 +271,17 @@ object ComputeSpectralIndex extends Logging{
     configs
   }
 
-  def getSpectralIndexConfigCases(sc: SparkContext, landsatTiff: String, time: String, outputDir: String, hConfFile: String): Array[(ComputeSpectralIndexConfig, Array[String])] = {
+  def getSpectralIndexConfigCases(landsatTiff: String, time: String, outputDir: String, hConfFile: String): Array[ComputeSpectralIndexConfig] = {
     val configs1 = getSpectralIndexConfig("va", "51", landsatTiff, outputDir, time, hConfFile)
     val configs2 = getSpectralIndexConfig("md", "24", landsatTiff, outputDir, time, hConfFile)
     val configs3 = getSpectralIndexConfig("dc", "11", landsatTiff, outputDir, time, hConfFile)
 
     val configs = configs1 ++ configs2 ++ configs3
-    val fs = FileSystem.get(sc.hadoopConfiguration)
+    configs
+    /*val fs = FileSystem.get(sc.hadoopConfiguration)
     val hosts = HdfsUtils.getDataLocation(fs, new Path(landsatTiff))
     configs.map(config => (config, hosts))
-
+*/
 
     /*sc.parallelize(configs).foreach(config => {
       addSpectralIndexToOSMLayer(config, spectralIndexNames)
@@ -252,12 +289,32 @@ object ComputeSpectralIndex extends Logging{
     })*/
   }
 
-  def computeSpectralIndexInParallel(sc: SparkContext, landsatTiffHDFSTxt: String, outputDir: String, hConfFile: String): Unit = {
+  def computeSpectralIndexInParallel(sc: SparkContext,
+                                     hConfFile: String,
+                                     landsatTiffHDFSTxt: String, outputDir: String): Unit = {
     val spectralIndexNames = Array("lst", "ndvi", "ndwi", "ndbi", "ndii", "mndwi", "ndisi")
+    val fs = FileSystem.get(sc.hadoopConfiguration)
 
-    val landsatFiles = sc.textFile(landsatTiffHDFSTxt).collect()
+    val landsatFilesWithDataLocation = sc.textFile(landsatTiffHDFSTxt).collect()
+      .map(landsatFilePath => {
+        val hosts = HdfsUtils.getDataLocation(fs, new Path(landsatFilePath))
+        (landsatFilePath, hosts)
+      })
 
-    val configCases = landsatFiles.flatMap(landsatFilePath => {
+    sc.makeRDD(landsatFilesWithDataLocation).foreach({
+      case (landsatFilePath, hosts) => {
+        val time = landsatFilePath.split("_")(3)
+        val configs = getSpectralIndexConfigCases(landsatFilePath, time, outputDir, hConfFile)
+        val hConf = new Configuration()
+        HdfsUtils.addConfigXmlFromHDFS(hConf, hConfFile)
+        addSpectralIndexToOSMLayer(landsatFilePath, hConf, configs, spectralIndexNames)
+        logInfo("Finished the processing of " + landsatFilePath)
+      }
+    })
+
+
+
+    /*val configCases = landsatFiles.flatMap(landsatFilePath => {
       val time = landsatFilePath.split("_")(3)
       getSpectralIndexConfigCases(sc, landsatFilePath, time, outputDir, hConfFile)
     })
@@ -265,7 +322,7 @@ object ComputeSpectralIndex extends Logging{
     sc.makeRDD(configCases).foreach(config => {
       addSpectralIndexToOSMLayer(config._1, spectralIndexNames)
       logInfo("Finished the processing of " + config._1.vectorIndexTableName)
-    })
+    })*/
   }
 
 

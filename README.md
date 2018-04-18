@@ -28,7 +28,7 @@ media data.
     
  * Launch Spark-shell:
  ```shell
-  ~/spark-2.3.0-bin-hadoop2.6/bin//spark-shell --master yarn --deploy-mode client --num-executors 10 --driver-memory 12g --executor-memory 10g --executor-cores 24 --jars ~/SparkCity/application/target/sparkcity-application-1.1.0-SNAPSHOT.jar
+  ~/spark-2.3.0-bin-hadoop2.6/bin//spark-shell --master yarn --deploy-mode client --num-executors 10 --driver-memory 12g --executor-memory 10g --executor-cores 1 --jars ~/SparkCity/application/target/sparkcity-application-1.1.0-SNAPSHOT.jar
  ```
  * Combine multiple bands
  ```scala
@@ -61,6 +61,8 @@ val time = "20170416"
 val outputDir = "/SparkCity/data"
 val hConfFile = "hdfs://svr-A3-A-U2:8020/SparkCity/config/conf_lst_cluster.xml"
 ComputeSpectralIndex.computeInCluster(sc, landsatTiff, time, outputDir, hConfFile)
+
+ComputeSpectralIndex.computeSpectralIndexInParallel(sc, "/SparkCity/landsat_hdfs_fullpath", "/SparkCity/data", "hdfs://svr-A3-A-U2:8020/SparkCity/config/conf_lst_cluster.xml")
 ```
 
 

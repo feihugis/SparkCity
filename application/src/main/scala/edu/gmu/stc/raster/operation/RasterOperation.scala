@@ -7,7 +7,7 @@ import edu.gmu.stc.raster.io.GeoTiffReaderHelper
 import edu.gmu.stc.raster.landsat.Calculations
 import edu.gmu.stc.vector.VectorUtil
 import edu.gmu.stc.vector.io.ShapeFileReaderHelper
-import geotrellis.raster.{DoubleConstantNoDataCellType, Tile}
+import geotrellis.raster.{DoubleConstantNoDataCellType, MultibandTile, Tile}
 import geotrellis.raster.io.geotiff.MultibandGeoTiff
 import geotrellis.vector.Extent
 import org.apache.hadoop.conf.Configuration
@@ -113,11 +113,102 @@ object RasterOperation extends  Logging {
     }
   }
 
+  def readMultiBandGeoTiff(hConf: Configuration,
+                           landsatMulBandFilePath: Path): (Extent, MultibandTile) = {
+    val geoTiff = GeoTiffReaderHelper.readMultiBand(landsatMulBandFilePath, hConf)
+    val tile = geoTiff.tile.convert(DoubleConstantNoDataCellType)
+    (geoTiff.extent, tile)
+  }
+
+  def computeSpectralIndex(multiBandTile: MultibandTile,
+                           indexNames: Array[String]): Array[Tile] = {
+    val tiles = indexNames.map(indexName => {
+      indexName.toLowerCase match {
+        case "lst" => {
+          val ndviTile = multiBandTile.combineDouble(
+            MaskBandsRandGandNIR.R_BAND,
+            MaskBandsRandGandNIR.NIR_BAND) {
+            (r: Double, ir: Double) => Calculations.ndvi(r, ir)
+          }
+
+          val (ndvi_min, ndvi_max) = ndviTile.findMinMaxDouble
+
+          multiBandTile.combineDouble(
+            MaskBandsRandGandNIR.R_BAND,
+            MaskBandsRandGandNIR.NIR_BAND,
+            MaskBandsRandGandNIR.TIRS1_BAND) {
+            (r: Double, nir: Double, tirs1: Double) => Calculations.lst(r, nir, tirs1, ndvi_min, ndvi_max)
+          }
+        }
+
+        case "ndvi" => {
+          multiBandTile.combineDouble(
+            MaskBandsRandGandNIR.R_BAND,
+            MaskBandsRandGandNIR.NIR_BAND) {
+            (r: Double, ir: Double) => Calculations.ndvi(r, ir)
+          }
+        }
+
+        case "ndwi" => {
+          multiBandTile.combineDouble(
+            MaskBandsRandGandNIR.G_BAND,
+            MaskBandsRandGandNIR.NIR_BAND) {
+            (g: Double, nir: Double) => Calculations.ndwi(g, nir)
+          }
+        }
+
+        case "mndwi" => {
+          multiBandTile.combineDouble(
+            MaskBandsRandGandNIR.G_BAND,
+            MaskBandsRandGandNIR.SWIR1_BAND) {
+            (g: Double, swir1: Double) => Calculations.mndwi(g, swir1)
+          }
+        }
+
+        case "ndbi" => {
+          multiBandTile.combineDouble(
+            MaskBandsRandGandNIR.SWIR1_BAND,
+            MaskBandsRandGandNIR.NIR_BAND) {
+            (swir1: Double, nir: Double) => Calculations.ndbi(swir1, nir)
+          }
+        }
+
+        case "ndii" => {
+          multiBandTile.combineDouble(
+            MaskBandsRandGandNIR.R_BAND,
+            MaskBandsRandGandNIR.TIRS1_BAND) {
+            (r: Double, tirs1: Double) => Calculations.ndii(r, tirs1)
+          }
+        }
+
+        case "ndisi" => {
+          multiBandTile.combineDouble(
+            MaskBandsRandGandNIR.TIRS1_BAND,
+            MaskBandsRandGandNIR.G_BAND,
+            MaskBandsRandGandNIR.NIR_BAND,
+            MaskBandsRandGandNIR.SWIR1_BAND) {
+            (tirs1: Double, g: Double, nir: Double, swir1: Double) => Calculations.ndisi(tirs1, g, nir, swir1)
+          }
+        }
+
+        case default => {
+          throw new AssertionError("Do not support this index: " + default)
+        }
+      }
+    })
+
+    tiles
+  }
+
+
+
   def computeSpectralIndex(hConf: Configuration,
                            landsatMulBandFilePath: Path,
                            indexNames: Array[String]): (Extent, Array[Tile]) = {
-    val geotiff = GeoTiffReaderHelper.readMultiBand(landsatMulBandFilePath, hConf)
-    val tile = geotiff.tile.convert(DoubleConstantNoDataCellType)
+    /*val geotiff = GeoTiffReaderHelper.readMultiBand(landsatMulBandFilePath, hConf)
+    val tile = geotiff.tile.convert(DoubleConstantNoDataCellType)*/
+
+    val  (extent, tile) = readMultiBandGeoTiff(hConf, landsatMulBandFilePath)
 
     val tiles = indexNames.map(indexName => {
       indexName.toLowerCase match {
@@ -194,7 +285,7 @@ object RasterOperation extends  Logging {
       }
     })
 
-    (geotiff.extent, tiles)
+    (extent, tiles)
   }
 
   def computeLSTAndNDVI(hConf: Configuration,
@@ -236,6 +327,50 @@ object RasterOperation extends  Logging {
 
     val (rasterExtent, indexTiles) = RasterOperation.computeSpectralIndex(hConf, new Path(rasterFile), indexNames)
 
+    val raster2osm_CRSTransform = VectorUtil.getCRSTransform(
+      rasterCRS, rasterLongitudeFirst, vectorCRS, vectorLongitudeFirst
+    )
+    val osm2raster_CRSTransform = VectorUtil.getCRSTransform(
+      vectorCRS, rasterLongitudeFirst, rasterCRS, vectorLongitudeFirst
+    )
+
+    val bbox = if (rasterCRS.equalsIgnoreCase(vectorCRS)) {
+      new Envelope(rasterExtent.xmin, rasterExtent.xmax, rasterExtent.ymin, rasterExtent.ymax)
+    } else {
+      val envelope = new Envelope(rasterExtent.xmin, rasterExtent.xmax, rasterExtent.ymin, rasterExtent.ymax)
+      JTS.transform(envelope, raster2osm_CRSTransform)
+    }
+
+    val polygons = ShapeFileReaderHelper.read(
+      hConf,
+      vectorIndexTableName,
+      bbox.getMinX,
+      bbox.getMinY,
+      bbox.getMaxX,
+      bbox.getMaxY,
+      hasAttribute = true)
+      .map(geometry => JTS.transform(geometry, osm2raster_CRSTransform))
+
+    val polygonsWithIndices = RasterOperation
+      .clipToPolygons(rasterExtent, indexTiles, polygons)
+      .filter(g => !g.getUserData.toString.contains("NaN"))
+      .map(geometry => JTS.transform(geometry, raster2osm_CRSTransform))
+
+    logInfo("*********** Number of Polygons: " + polygonsWithIndices.size)
+    logInfo("*********** Number of Input Polygons: " + polygons.size)
+
+    polygonsWithIndices
+  }
+
+  def extractMeanValueFromTileByGeometry(hConf: Configuration,
+                                         rasterExtent: Extent,
+                                         indexTiles: Array[Tile],
+                                         rasterCRS: String,
+                                         rasterLongitudeFirst: Boolean,
+                                         vectorIndexTableName: String,
+                                         vectorCRS: String,
+                                         vectorLongitudeFirst: Boolean
+                                        ): List[Geometry] = {
     val raster2osm_CRSTransform = VectorUtil.getCRSTransform(
       rasterCRS, rasterLongitudeFirst, vectorCRS, vectorLongitudeFirst
     )

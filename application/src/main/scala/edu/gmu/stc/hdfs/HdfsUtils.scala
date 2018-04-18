@@ -76,4 +76,9 @@ object HdfsUtils extends Logging{
     out.close()
   }
 
+  def addConfigXmlFromHDFS(hConf: Configuration, configFilePath: String): Unit = {
+    val fs = FileSystem.get(hConf)
+    val inputStream = fs.open(new Path(configFilePath))
+    hConf.addResource(inputStream)
+  }
 }
