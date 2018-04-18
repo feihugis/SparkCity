@@ -219,6 +219,10 @@ public class GeometryReaderUtil {
     //OutputStream outputStream = fs.create(file);
 
     File localFile = new File("/var/lib/hadoop-hdfs/" + filepath);
+    if (!localFile.getParentFile().exists()) {
+      localFile.getParentFile().mkdirs();
+    }
+
     Map<String, Serializable> params = new HashMap<String, Serializable>();
     params.put(ShapefileDataStoreFactory.URLP.key, localFile.toURI().toURL());
     ShapefileDataStore ds = (ShapefileDataStore) new ShapefileDataStoreFactory().createNewDataStore(params);
