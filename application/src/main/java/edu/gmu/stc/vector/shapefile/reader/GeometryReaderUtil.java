@@ -275,7 +275,10 @@ public class GeometryReaderUtil {
     ds.dispose();
 
     //copy local shapefile to HDFS
-    fs.copyFromLocalFile(true, new Path(localFile.getParent()), file.getParent().getParent());
+    File[] shapefiles = localFile.getParentFile().listFiles();
+    for (File shapefiel : shapefiles) {
+      fs.copyFromLocalFile(true, new Path(shapefiel.getAbsolutePath()), file.getParent());
+    }
   }
 
   public static void saveDbfAsCSV(List<Geometry> geometries,
